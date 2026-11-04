@@ -100,9 +100,12 @@ def get_project_location_balances(project):
 
 def _lock_locations(locations):
     pks = sorted({location.pk for location in locations if location and location.pk})
+    # ``project`` is a nullable foreign key, so ``select_related`` adds an outer
+    # join. PostgreSQL refuses ``FOR UPDATE`` over the nullable side of an outer
+    # join, so only the location rows themselves are locked.
     return {
         location.pk: location
-        for location in Location.objects.select_for_update()
+        for location in Location.objects.select_for_update(of=("self",))
         .select_related("project")
         .filter(pk__in=pks)
         .order_by("pk")
@@ -193,7 +196,7 @@ def create_initial_entry(
         from purchases.models import PurchaseItem
 
         purchase_item = (
-            PurchaseItem.objects.select_for_update()
+            PurchaseItem.objects.select_for_update(of=("self",))
             .select_related("purchase", "item")
             .get(pk=purchase_item.pk)
         )
@@ -373,7 +376,7 @@ def create_adjustment_out(
 def cancel_stock_movement(*, movement, user, reason):
     _require_reason(reason)
     movement = (
-        StockMovement.objects.select_for_update()
+        StockMovement.objects.select_for_update(of=("self",))
         .select_related("item", "from_location", "to_location")
         .get(pk=movement.pk)
     )
