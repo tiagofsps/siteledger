@@ -420,26 +420,108 @@ textarea:focus-visible {
   color: var(--color-accent);
 }
 
-.theme-toggle-btn {
+.theme-switch {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border: 0;
+  border-radius: 999px;
   color: var(--color-text);
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.9rem;
-  font-weight: 600;
-  gap: 0.4rem;
-  justify-content: center;
-  min-height: 2.5rem;
-  padding: 0.35rem 0.65rem;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  flex: 0 0 auto;
+  padding: 0.5rem;
 }
 
-.theme-toggle-btn:hover {
+.theme-switch-track {
+  align-items: center;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  display: inline-flex;
+  height: 1.75rem;
+  padding: 0.2rem;
+  position: relative;
+  transition: border-color 0.15s ease, background-color 0.2s ease;
+  width: 3.25rem;
+}
+
+.theme-switch-option {
+  align-items: center;
+  display: inline-flex;
+  flex: 1 1 50%;
+  font-size: 0.8rem;
+  height: 100%;
+  justify-content: center;
+  line-height: 1;
+  position: relative;
+  transition: color 0.15s ease;
+  z-index: 1;
+}
+
+.theme-switch-option--sun {
+  color: var(--color-text);
+}
+
+.theme-switch-option--moon {
+  color: var(--color-muted);
+}
+
+.theme-switch-thumb {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  height: calc(100% - 0.4rem);
+  left: 0.2rem;
+  position: absolute;
+  top: 0.2rem;
+  transform: translateX(0);
+  transition: transform 0.2s ease, border-color 0.15s ease, background-color 0.2s ease;
+  width: calc(50% - 0.2rem);
+  z-index: 0;
+}
+
+[data-theme="dark"] .theme-switch-thumb {
+  transform: translateX(100%);
+}
+
+[data-theme="dark"] .theme-switch-option--sun {
+  color: var(--color-muted);
+}
+
+[data-theme="dark"] .theme-switch-option--moon {
+  color: var(--color-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-switch-thumb {
+    transform: translateX(100%);
+  }
+
+  :root:not([data-theme="light"]) .theme-switch-option--sun {
+    color: var(--color-muted);
+  }
+
+  :root:not([data-theme="light"]) .theme-switch-option--moon {
+    color: var(--color-text);
+  }
+}
+
+.theme-switch:hover .theme-switch-track {
   border-color: var(--color-accent);
-  color: var(--color-accent);
+}
+
+.theme-switch:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch-track,
+  .theme-switch-option,
+  .theme-switch-thumb {
+    transition: none;
+  }
 }
 
 /* Main Layout */
@@ -1160,7 +1242,6 @@ textarea:focus-visible {
     width: 100%;
   }
 
-  .js .app-nav-actions .theme-toggle-btn,
   .js .app-nav-actions .logout-form,
   .js .app-nav-actions .logout-form .button {
     width: 100%;
@@ -1452,7 +1533,7 @@ textarea:focus-visible {
 }
 
 .login-card {
-  width: min(100%, 28rem);
+  width: min(100%, 24rem);
 }
 
 .login-card h1 {

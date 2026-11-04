@@ -69,6 +69,9 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn('id="app-search-panel"', html)
         self.assertIn('id="global-search"', html)
         self.assertIn('id="global-search-results"', html)
+        self.assertIn('id="theme-toggle"', html)
+        self.assertIn('role="switch"', html)
+        self.assertIn('class="theme-switch"', html)
         for label in ("Obras", "Compras", "Artigos", "Movimentos"):
             with self.subTest(label=label):
                 self.assertIn(f">{label}</a>", html)
@@ -80,6 +83,7 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertNotIn('id="app-nav"', html)
         self.assertNotIn('id="global-search"', html)
         self.assertIn('id="theme-toggle"', html)
+        self.assertIn('role="switch"', html)
         self.assertIn(reverse("login"), html)
 
     def test_mobile_javascript_asset_is_available(self):
