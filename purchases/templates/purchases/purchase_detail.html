@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Compra de {{ purchase.purchase_date|date:"d/m/Y" }} | Compras{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'purchases:purchase_list' %}">Compras</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ purchase.purchase_date|date:"d/m/Y" }} — {{ purchase.supplier.name }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>Compra de {{ purchase.purchase_date|date:"d/m/Y" }}</h1>
+      <p class="page-subtitle">{{ purchase.supplier.name }}</p>
+    </div>
+    {% if can_change_purchase %}
+      <div class="page-actions">
+        <a class="button button--secondary" href="{% url 'purchases:purchase_update' purchase.pk %}">Editar</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <section class="detail-panel" aria-labelledby="purchase-summary">
+    <h2 id="purchase-summary" class="visually-hidden">Resumo da compra</h2>
+    <dl class="detail-list">
+      <div>
+        <dt>Fornecedor</dt>
+        <dd>{{ purchase.supplier.name }}</dd>
+      </div>
+      <div>
+        <dt>Data da compra</dt>
+        <dd>{{ purchase.purchase_date|date:"d/m/Y" }}</dd>
+      </div>
+      <div>
+        <dt>Total</dt>
+        <dd>{{ purchase.total|floatformat:2 }} €</dd>
+      </div>
+      {% if purchase.notes %}
+        <div>
+          <dt>Observações</dt>
+          <dd>{{ purchase.notes|linebreaks }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  <section class="section-block" aria-labelledby="purchase-items">
+    <h2 id="purchase-items">Artigos</h2>
+
+    {% if items %}
+      <div class="item-list">
+        {% for item in items %}
+          <article class="item-card">
+            <div class="item-card-header">
+              <div>
+                <h3>{{ item.description }}</h3>
+                <p class="record-card-meta">
+                  {{ item.quantity|floatformat:3 }} {{ item.unit }}
+                  {% if item.item_id %}· {{ item.item.name }}{% endif %}
+                  {% if item.unit_price is not None %}
+                    × {{ item.unit_price|floatformat:2 }} €
+                  {% endif %}
+                </p>
+              </div>
+              <div class="item-card-total">
+                {% if item.subtotal is not None %}
+                  <strong>{{ item.subtotal|floatformat:2 }} €</strong>
+                {% else %}
+                  <span class="text-muted">Sem preço unitário</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <dl class="obra-meta">
+              <div>
+                <dt>Alocada</dt>
+                <dd>{{ item.active_allocated|default_if_none:0|floatformat:3 }} {{ item.unit }}</dd>
+              </div>
+              <div>
+                <dt>Por alocar</dt>
+                <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
+              </div>
+            </dl>
+
+            {% if can_allocate %}
+              <div class="item-card-actions">
+                <a class="button button--secondary button--small" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Gerir alocações</a>
+              </div>
+            {% endif %}
+
+            {% if item.movements.all %}
+              <div class="table-scroll">
+                <table class="data-table">
+                  <caption class="visually-hidden">Movimentos de {{ item.description }}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Data</th>
+                      <th scope="col">Destino</th>
+                      <th scope="col">Quantidade</th>
+                      <th scope="col">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for movement in item.movements.all %}
+                      <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
+                        <td>{{ movement.movement_date|date:"d/m/Y" }}</td>
+                        <td>{{ movement.to_location.name|default:"—" }}</td>
+                        <td>{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
+                        <td>
+                          {% if movement.is_cancelled %}
+                            <span class="status-badge status-badge--archived">Cancelado</span>
+                          {% else %}
+                            <span class="status-badge status-badge--completed">Ativo</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">Este artigo ainda não foi alocado.</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Esta compra ainda não tem artigos.</p>
+    {% endif %}
+  </section>
+
+  <p class="record-meta">
+    Criada em {{ purchase.created_at|date:"d/m/Y H:i" }}.
+    Última atualização em {{ purchase.updated_at|date:"d/m/Y H:i" }}.
+  </p>
+{% endblock %}

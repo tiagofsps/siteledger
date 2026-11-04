@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentos | Partilha Louca Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Movimentos</h1>
+      <p class="page-subtitle">Histórico de entradas, transferências, correções e devoluções. Os saldos são registados, não stock físico confirmado.</p>
+    </div>
+    {% if can_add_movement %}
+      <div class="page-actions">
+        <a class="button" href="{% url 'inventory:initial_entry_create' %}">Entrada inicial</a>
+        <a class="button button--secondary" href="{% url 'inventory:transfer_create' %}">Transferência</a>
+        <a class="button button--secondary" href="{% url 'inventory:return_to_warehouse' %}">Devolver ao armazém</a>
+        <a class="button button--secondary" href="{% url 'inventory:adjustment_in_create' %}">Correção de entrada</a>
+        <a class="button button--secondary" href="{% url 'inventory:adjustment_out_create' %}">Correção de saída</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <form
+    class="filters"
+    method="get"
+    action="{% url 'inventory:movement_list' %}"
+    hx-get="{% url 'inventory:movement_list' %}"
+    hx-target="#movements-results"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    hx-trigger="submit, change"
+    hx-indicator="#movements-loading"
+  >
+    {{ filter_form.non_field_errors }}
+    <div class="filter-field">
+      {{ filter_form.item.label_tag }}
+      {{ filter_form.item }}
+      {{ filter_form.item.errors }}
+    </div>
+    <div class="filter-field">
+      {{ filter_form.location.label_tag }}
+      {{ filter_form.location }}
+      {{ filter_form.location.errors }}
+    </div>
+    <div class="filter-field">
+      {{ filter_form.movement_type.label_tag }}
+      {{ filter_form.movement_type }}
+      {{ filter_form.movement_type.errors }}
+    </div>
+    <div class="filter-actions">
+      <button class="button" type="submit">Filtrar</button>
+      <a class="button button--secondary" href="{% url 'inventory:movement_list' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p id="movements-loading" class="loading-indicator" role="status" aria-live="polite">
+    A carregar…
+  </p>
+
+  <div id="movements-results">
+    {% include "inventory/partials/movement_results.html" %}
+  </div>
+{% endblock %}

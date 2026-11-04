@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Compras | Partilha Louca Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Compras</h1>
+      <p class="page-subtitle">Registo de compras de materiais e equipamentos.</p>
+    </div>
+    {% if can_add_purchase %}
+      <a class="button" href="{% url 'purchases:purchase_create' %}">Nova compra</a>
+    {% endif %}
+  </div>
+
+  <form
+    class="filters"
+    method="get"
+    action="{% url 'purchases:purchase_list' %}"
+    hx-get="{% url 'purchases:purchase_list' %}"
+    hx-target="#purchase-results"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    hx-trigger="submit, keyup changed delay:300ms, change"
+    hx-indicator="#purchase-loading"
+  >
+    {{ filter_form.non_field_errors }}
+    <div class="filter-field filter-field--search">
+      {{ filter_form.q.label_tag }}
+      {{ filter_form.q }}
+      {{ filter_form.q.errors }}
+    </div>
+    <div class="filter-field">
+      {{ filter_form.supplier.label_tag }}
+      {{ filter_form.supplier }}
+      {{ filter_form.supplier.errors }}
+    </div>
+    {% if filter_form.project %}
+      <div class="filter-field">
+        {{ filter_form.project.label_tag }}
+        {{ filter_form.project }}
+        {{ filter_form.project.errors }}
+      </div>
+    {% endif %}
+    <div class="filter-actions">
+      <button class="button" type="submit">Filtrar</button>
+      <a class="button button--secondary" href="{% url 'purchases:purchase_list' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p id="purchase-loading" class="loading-indicator" role="status" aria-live="polite">
+    A carregar…
+  </p>
+
+  <div id="purchase-results">
+    {% include "purchases/partials/purchase_results.html" %}
+  </div>
+{% endblock %}

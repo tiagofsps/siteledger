@@ -1,0 +1,38 @@
+{% if items %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Artigo</th>
+          <th scope="col">Categoria</th>
+          <th scope="col">Unidade</th>
+          <th scope="col">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td><a href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
+            <td>{{ item.get_category_display }}</td>
+            <td>{{ item.unit }}</td>
+            <td>{% if item.is_active %}Ativo{% else %}Inativo{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination" aria-label="Paginação">
+      {% if page_obj.has_previous %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">Seguinte</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <p class="empty-state">Ainda não existem artigos registados.</p>
+{% endif %}

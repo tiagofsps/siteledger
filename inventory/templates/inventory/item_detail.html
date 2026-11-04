@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.name }} | Artigos{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'inventory:item_list' %}">Artigos</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ item.name }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>{{ item.name }}</h1>
+      <p class="page-subtitle">{{ item.get_category_display }} · Unidade: {{ item.unit }}{% if not item.is_active %} · Inativo{% endif %}</p>
+    </div>
+    <div class="page-actions">
+      {% if can_change_item %}
+        <a class="button button--secondary" href="{% url 'inventory:item_update' item.pk %}">Editar</a>
+      {% endif %}
+      {% if can_add_movement %}
+        <a class="button button--secondary" href="{% url 'inventory:initial_entry_create' %}">Entrada inicial</a>
+        <a class="button" href="{% url 'inventory:transfer_create' %}">Transferência</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if item.description %}
+    <section class="detail-panel" aria-labelledby="item-description">
+      <h2 id="item-description">Descrição</h2>
+      <p>{{ item.description|linebreaks }}</p>
+    </section>
+  {% endif %}
+
+  <section class="section-block" aria-labelledby="item-balances">
+    <div class="section-header">
+      <div>
+        <h2 id="item-balances">Saldos registados</h2>
+        <p class="page-subtitle">Quantidades registadas por localização. Não representam stock físico confirmado.</p>
+      </div>
+    </div>
+    {% if balances %}
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Localização</th>
+              <th scope="col">Quantidade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for balance in balances %}
+              <tr>
+                <td>
+                  {% if balance.location.project %}
+                    <a href="{{ balance.location.project.get_absolute_url }}">{{ balance.location.name }}</a>
+                  {% else %}
+                    {{ balance.location.name }}
+                  {% endif %}
+                </td>
+                <td>{{ balance.quantity }} {{ item.unit }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-state">Ainda não existem movimentos registados para este artigo.</p>
+    {% endif %}
+  </section>
+
+  <section class="section-block" aria-labelledby="item-movements">
+    <div class="section-header">
+      <div>
+        <h2 id="item-movements">Movimentos recentes</h2>
+      </div>
+      <a class="button button--secondary button--small" href="{% url 'inventory:movement_list' %}?item={{ item.pk }}">Ver todos</a>
+    </div>
+    {% if movements %}
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Origem</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Quantidade</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for movement in movements %}
+              <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
+                <td><a href="{{ movement.get_absolute_url }}">{{ movement.movement_date|date:"d/m/Y" }}</a></td>
+                <td>{{ movement.get_movement_type_display }}</td>
+                <td>{{ movement.from_location|default:"—" }}</td>
+                <td>{{ movement.to_location|default:"—" }}</td>
+                <td>{{ movement.quantity }} {{ item.unit }}</td>
+                <td>{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-state">Ainda não existem movimentos registados.</p>
+    {% endif %}
+  </section>
+{% endblock %}

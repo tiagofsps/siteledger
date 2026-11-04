@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Artigos | Partilha Louca Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Artigos</h1>
+      <p class="page-subtitle">Catálogo partilhado de materiais, equipamentos e materiais reutilizáveis.</p>
+    </div>
+    {% if can_add_item %}
+      <a class="button" href="{% url 'inventory:item_create' %}">Novo artigo</a>
+    {% endif %}
+  </div>
+
+  <form
+    class="filters"
+    method="get"
+    action="{% url 'inventory:item_list' %}"
+    hx-get="{% url 'inventory:item_list' %}"
+    hx-target="#items-results"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    hx-trigger="submit, keyup changed delay:300ms"
+    hx-indicator="#items-loading"
+  >
+    <div class="filter-field filter-field--search">
+      <label for="item-search">Pesquisar</label>
+      <input id="item-search" type="search" name="q" value="{{ query }}" placeholder="Nome, unidade ou descrição">
+    </div>
+    <div class="filter-actions">
+      <button class="button" type="submit">Pesquisar</button>
+      <a class="button button--secondary" href="{% url 'inventory:item_list' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p id="items-loading" class="loading-indicator" role="status" aria-live="polite">
+    A carregar…
+  </p>
+
+  <div id="items-results">
+    {% include "inventory/partials/item_results.html" %}
+  </div>
+{% endblock %}
