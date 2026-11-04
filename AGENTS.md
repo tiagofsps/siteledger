@@ -355,6 +355,7 @@ This configuration is temporary and must be replaced by application authenticati
 - Architectural changes require justification, impact, alternatives and prior approval.
 - Python, Django or main dependency updates require justification and prior approval.
 - Keep `.gitignore` up to date.
+- Follow `docs/commit-conventions.md` for commit message format and scope naming.
 - Never version `.env`, `.venv/`, `db.sqlite3`, uploads, caches or temporary files.
 
 ## 14. Reference commands
