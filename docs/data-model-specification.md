@@ -758,8 +758,10 @@ The source location must have sufficient recorded balance.
 
 ## 10. Permissions and access control
 
-The application should use Django authentication and permissions, with
-the final user-facing login flow defined separately.
+The application uses Django authentication and permissions, with a
+custom login page at `/login/` and POST-only logout at `/logout/`.
+There is no public registration; users are created and managed by an
+administrator in the Django Admin.
 
 Proposed permission distinctions:
 
