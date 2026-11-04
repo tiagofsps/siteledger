@@ -221,6 +221,12 @@ class AdjustmentOutForm(MovementFormMixin, forms.Form):
 
 
 class MovementFilterForm(forms.Form):
+    q = forms.CharField(
+        label="Pesquisar",
+        required=False,
+        max_length=200,
+        widget=forms.SearchInput,
+    )
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.all(),

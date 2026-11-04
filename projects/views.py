@@ -48,7 +48,9 @@ class ProjectListView(PermissionRequiredMixin, ListView):
 
         if query:
             queryset = queryset.filter(
-                Q(name__icontains=query) | Q(address__icontains=query)
+                Q(name__icontains=query)
+                | Q(address__icontains=query)
+                | Q(description__icontains=query)
             )
 
         return queryset

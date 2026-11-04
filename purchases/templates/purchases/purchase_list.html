@@ -14,7 +14,7 @@
   </div>
 
   <form
-    class="filters"
+    class="filters{% if filter_form.project %} filters--purchase{% endif %}"
     method="get"
     action="{% url 'purchases:purchase_list' %}"
     hx-get="{% url 'purchases:purchase_list' %}"
@@ -30,18 +30,27 @@
       {{ filter_form.q }}
       {{ filter_form.q.errors }}
     </div>
-    <div class="filter-field">
-      {{ filter_form.supplier.label_tag }}
-      {{ filter_form.supplier }}
-      {{ filter_form.supplier.errors }}
-    </div>
-    {% if filter_form.project %}
+    <button
+      class="button button--secondary filter-toggle"
+      type="button"
+      data-filter-toggle
+      aria-controls="purchase-secondary-filters"
+      aria-expanded="{% if filter_form.supplier.value or filter_form.project.value %}true{% else %}false{% endif %}"
+    >Filtros</button>
+    <div id="purchase-secondary-filters" class="filter-secondary{% if filter_form.supplier.value or filter_form.project.value %} is-open{% endif %}">
       <div class="filter-field">
-        {{ filter_form.project.label_tag }}
-        {{ filter_form.project }}
-        {{ filter_form.project.errors }}
+        {{ filter_form.supplier.label_tag }}
+        {{ filter_form.supplier }}
+        {{ filter_form.supplier.errors }}
       </div>
-    {% endif %}
+      {% if filter_form.project %}
+        <div class="filter-field">
+          {{ filter_form.project.label_tag }}
+          {{ filter_form.project }}
+          {{ filter_form.project.errors }}
+        </div>
+      {% endif %}
+    </div>
     <div class="filter-actions">
       <button class="button" type="submit">Filtrar</button>
       <a class="button button--secondary" href="{% url 'purchases:purchase_list' %}">Limpar</a>

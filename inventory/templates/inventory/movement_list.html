@@ -20,31 +20,45 @@
   </div>
 
   <form
-    class="filters"
+    class="filters filters--movement"
     method="get"
     action="{% url 'inventory:movement_list' %}"
     hx-get="{% url 'inventory:movement_list' %}"
     hx-target="#movements-results"
     hx-swap="innerHTML"
     hx-push-url="true"
-    hx-trigger="submit, change"
+    hx-trigger="submit, keyup changed delay:300ms, change"
     hx-indicator="#movements-loading"
   >
     {{ filter_form.non_field_errors }}
-    <div class="filter-field">
-      {{ filter_form.item.label_tag }}
-      {{ filter_form.item }}
-      {{ filter_form.item.errors }}
+    <div class="filter-field filter-field--search">
+      {{ filter_form.q.label_tag }}
+      {{ filter_form.q }}
+      {{ filter_form.q.errors }}
     </div>
-    <div class="filter-field">
-      {{ filter_form.location.label_tag }}
-      {{ filter_form.location }}
-      {{ filter_form.location.errors }}
-    </div>
-    <div class="filter-field">
-      {{ filter_form.movement_type.label_tag }}
-      {{ filter_form.movement_type }}
-      {{ filter_form.movement_type.errors }}
+    <button
+      class="button button--secondary filter-toggle"
+      type="button"
+      data-filter-toggle
+      aria-controls="movement-secondary-filters"
+      aria-expanded="{% if filter_form.item.value or filter_form.location.value or filter_form.movement_type.value %}true{% else %}false{% endif %}"
+    >Filtros</button>
+    <div id="movement-secondary-filters" class="filter-secondary{% if filter_form.item.value or filter_form.location.value or filter_form.movement_type.value %} is-open{% endif %}">
+      <div class="filter-field">
+        {{ filter_form.item.label_tag }}
+        {{ filter_form.item }}
+        {{ filter_form.item.errors }}
+      </div>
+      <div class="filter-field">
+        {{ filter_form.location.label_tag }}
+        {{ filter_form.location }}
+        {{ filter_form.location.errors }}
+      </div>
+      <div class="filter-field">
+        {{ filter_form.movement_type.label_tag }}
+        {{ filter_form.movement_type }}
+        {{ filter_form.movement_type.errors }}
+      </div>
     </div>
     <div class="filter-actions">
       <button class="button" type="submit">Filtrar</button>

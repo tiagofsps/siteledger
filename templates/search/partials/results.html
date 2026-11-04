@@ -1,0 +1,104 @@
+{% if projects or purchases or suppliers or items or movements %}
+  <div class="search-result-groups">
+    {% if projects %}
+      <section class="search-group">
+        <div class="search-group-header">
+          <h2>Obras</h2>
+          <a href="{% url 'projects:list' %}?q={{ query|urlencode }}">Ver todas</a>
+        </div>
+        <ul class="search-list">
+          {% for project in projects %}
+            <li>
+              <a href="{{ project.get_absolute_url }}">
+                <span class="search-result-title">{{ project.name }}</span>
+                <span class="search-result-meta">{{ project.address|default:"Sem morada" }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if purchases %}
+      <section class="search-group">
+        <div class="search-group-header">
+          <h2>Compras</h2>
+          <a href="{% url 'purchases:purchase_list' %}?q={{ query|urlencode }}">Ver todas</a>
+        </div>
+        <ul class="search-list">
+          {% for purchase in purchases %}
+            <li>
+              <a href="{{ purchase.get_absolute_url }}">
+                <span class="search-result-title">Compra de {{ purchase.purchase_date|date:"d/m/Y" }}</span>
+                <span class="search-result-meta">{{ purchase.supplier.name }} · {{ purchase.total|floatformat:2 }} €</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if suppliers %}
+      <section class="search-group">
+        <div class="search-group-header">
+          <h2>Fornecedores</h2>
+          <a href="{% url 'purchases:supplier_list' %}?q={{ query|urlencode }}">Ver todos</a>
+        </div>
+        <ul class="search-list">
+          {% for supplier in suppliers %}
+            <li>
+              <a href="{% url 'purchases:supplier_list' %}?q={{ supplier.name|urlencode }}">
+                <span class="search-result-title">{{ supplier.name }}</span>
+                <span class="search-result-meta">{% if supplier.is_active %}Ativo{% else %}Inativo{% endif %}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if items %}
+      <section class="search-group">
+        <div class="search-group-header">
+          <h2>Artigos</h2>
+          <a href="{% url 'inventory:item_list' %}?q={{ query|urlencode }}">Ver todos</a>
+        </div>
+        <ul class="search-list">
+          {% for item in items %}
+            <li>
+              <a href="{{ item.get_absolute_url }}">
+                <span class="search-result-title">{{ item.name }}</span>
+                <span class="search-result-meta">{{ item.get_category_display }} · {{ item.unit }}{% if not item.is_active %} · Inativo{% endif %}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if movements %}
+      <section class="search-group">
+        <div class="search-group-header">
+          <h2>Movimentos</h2>
+          <a href="{% url 'inventory:movement_list' %}?q={{ query|urlencode }}">Ver todos</a>
+        </div>
+        <ul class="search-list">
+          {% for movement in movements %}
+            <li>
+              <a href="{{ movement.get_absolute_url }}">
+                <span class="search-result-title">{{ movement.get_movement_type_display }} · {{ movement.item.name }}</span>
+                <span class="search-result-meta">
+                  {{ movement.movement_date|date:"d/m/Y" }} · {{ movement.quantity }} {{ movement.item.unit }}
+                  · {{ movement.from_location|default:"—" }} → {{ movement.to_location|default:"—" }}
+                  {% if movement.is_cancelled %}· Cancelado{% endif %}
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  </div>
+{% else %}
+  <p class="search-empty">Sem resultados para “{{ query }}”.</p>
+{% endif %}
