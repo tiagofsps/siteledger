@@ -113,6 +113,30 @@ python manage.py migrate
 
 The initial inventory migration seeds the logical warehouse. Project locations are created through the project creation and update flows.
 
+## Demo data
+
+For local development, populate the database with deterministic demo data:
+
+```bash
+python manage.py seed_demo
+```
+
+Associate the created movements with an existing user:
+
+```bash
+python manage.py seed_demo --user admin
+```
+
+The command is idempotent: running it again does not duplicate demo records. It refuses to run when `DJANGO_DEBUG=False` unless `--force` is provided. It is intended for development and demo environments only, not for production data.
+
+To restore a completely clean demo state, delete the local SQLite database and recreate it:
+
+```bash
+rm db.sqlite3
+python manage.py migrate
+python manage.py seed_demo
+```
+
 ## Starting the server
 
 ```bash
