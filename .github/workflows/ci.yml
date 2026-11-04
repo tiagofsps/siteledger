@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: siteledger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_DB_ENGINE: postgresql
+      DB_NAME: siteledger
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      # Tests run with DEBUG enabled, as in local development. Production
+      # settings are exercised separately by the static files step below.
+      DJANGO_SECRET_KEY: ci-only-not-a-secret-key-for-tests-12345678901234567890
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Django checks
+        run: python manage.py check
+
+      - name: Check migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: python manage.py test
+
+      - name: Validate production settings
+        env:
+          DJANGO_DEBUG: "False"
+        run: python manage.py check
+
+      - name: Collect static files
+        env:
+          DJANGO_DEBUG: "False"
+        run: python manage.py collectstatic --noinput
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is not configured." >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
