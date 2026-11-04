@@ -167,6 +167,10 @@ Authentication:
 - `/login/`: application login.
 - `/logout/`: POST-only logout.
 
+Help:
+
+- `/ajuda/`: complete workflow guide in European Portuguese.
+
 Search:
 
 - `/search/`: global search across projects, purchases, suppliers, items and movements, with an HTMX dropdown and a full results page.

@@ -186,6 +186,9 @@ class PurchaseListView(PermissionRequiredMixin, ListView):
         context["can_add_purchase"] = self.request.user.has_perm(
             "purchases.add_purchase"
         )
+        context["can_view_suppliers"] = self.request.user.has_perm(
+            "purchases.view_supplier"
+        )
         context["can_view_projects"] = self.request.user.has_perm(
             "projects.view_project"
         )

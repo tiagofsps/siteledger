@@ -31,7 +31,7 @@ Key paths:
 
 - `inventory/services.py`: authoritative quantity-changing domain operations.
 - `config/views.py`: global search.
-- `templates/base.html`, `templates/registration/login.html`, `templates/search/`, `templates/partials/`.
+- `templates/base.html`, `templates/registration/login.html`, `templates/search/`, `templates/help.html`, `templates/partials/`.
 - `inventory/management/commands/seed_demo.py`: development/demo data.
 - `docs/siteledger-data-model-specification.md`: domain model.
 - `docs/commit-conventions.md`: commit format.
@@ -140,7 +140,7 @@ python manage.py test tests.test_authentication.LoginViewTests.test_login_page_r
 - Use Django's native test runner only; do not add pytest or another test framework without approval.
 - Tests live in `<app>/tests/` and in root `tests/`.
 - Tests may create movements directly only to exercise model constraints; application flows must still use the domain services.
-- Cover authentication, CSRF, permissions, search filtering, HTMX partials, seed idempotency and guided-form error routing.
+- Cover authentication, CSRF, permissions, search filtering, HTMX partials, help content, seed idempotency and guided-form error routing.
 - For interface changes, manually verify mobile widths, keyboard operation and the no-JavaScript fallback.
 - Before completing a task:
   - run `python manage.py check`

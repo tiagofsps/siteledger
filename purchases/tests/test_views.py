@@ -266,6 +266,11 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "excede o que falta alocar")
 
+    def test_purchase_list_links_to_suppliers(self):
+        response = self.client.get(reverse("purchases:purchase_list"))
+
+        self.assertContains(response, reverse("purchases:supplier_list"))
+
     def test_purchase_list_filters_by_project(self):
         project = create_project(name="Obra Filtrada")
         location = project_location(project)
