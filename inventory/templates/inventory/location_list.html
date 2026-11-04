@@ -24,16 +24,16 @@
         <tbody>
           {% for location in locations %}
             <tr>
-              <td>{{ location.name }}</td>
-              <td>{{ location.get_location_type_display }}</td>
-              <td>
+              <td data-label="Localização">{{ location.name }}</td>
+              <td data-label="Tipo">{{ location.get_location_type_display }}</td>
+              <td data-label="Obra">
                 {% if location.project %}
                   <a href="{{ location.project.get_absolute_url }}">{{ location.project.name }}</a>
                 {% else %}
                   —
                 {% endif %}
               </td>
-              <td>{% if location.is_active %}Ativa{% else %}Inativa{% endif %}</td>
+              <td data-label="Estado">{% if location.is_active %}Ativa{% else %}Inativa{% endif %}</td>
             </tr>
           {% endfor %}
         </tbody>

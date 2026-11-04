@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}SiteLedger Operations Management{% endblock %}</title>
   <script>
+    document.documentElement.classList.add('js');
     (function() {
       var theme = localStorage.getItem('theme');
       if (theme) {
@@ -15,6 +16,7 @@
   </script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -27,18 +29,46 @@
           <span class="app-brand-subtitle">Gestão Operacional</span>
         </div>
       </a>
-      <nav class="app-nav" aria-label="Navegação principal">
-        <a class="app-nav-link" href="{% url 'projects:list' %}" title="Gestão e acompanhamento das obras da empresa">Obras</a>
-        <a class="app-nav-link" href="{% url 'purchases:purchase_list' %}" title="Compras e fornecedores">Compras</a>
-        <a class="app-nav-link" href="{% url 'inventory:item_list' %}" title="Catálogo de materiais e equipamentos">Artigos</a>
-        <a class="app-nav-link" href="{% url 'inventory:movement_list' %}" title="Histórico de movimentos e saldos registados">Movimentos</a>
-        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Alternar tema" title="Alternar entre modo claro e modo escuro">
-          <span id="theme-icon" aria-hidden="true">🌙</span>
-          <span id="theme-label">Escuro</span>
+      <button
+        id="nav-toggle"
+        class="nav-toggle"
+        type="button"
+        aria-controls="app-nav"
+        aria-expanded="false"
+        aria-label="Abrir menu"
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <nav id="app-nav" class="app-nav" aria-label="Navegação principal">
+        <button
+          id="nav-close"
+          class="nav-close"
+          type="button"
+          aria-label="Fechar menu"
+        >
+          <span aria-hidden="true">×</span>
         </button>
+
+        <div class="app-nav-links">
+          {% with path=request.path %}
+            <a class="app-nav-link{% if path == '/' or path|slice:':10' == '/projects/' %} app-nav-link--active{% endif %}" href="{% url 'projects:list' %}" title="Gestão e acompanhamento das obras da empresa">Obras</a>
+            <a class="app-nav-link{% if path|slice:':11' == '/purchases/' %} app-nav-link--active{% endif %}" href="{% url 'purchases:purchase_list' %}" title="Compras e fornecedores">Compras</a>
+            <a class="app-nav-link{% if path|slice:':17' == '/inventory/items/' or path|slice:':21' == '/inventory/locations/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:item_list' %}" title="Catálogo de materiais e equipamentos">Artigos</a>
+            <a class="app-nav-link{% if path|slice:':21' == '/inventory/movements/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:movement_list' %}" title="Histórico de movimentos e saldos registados">Movimentos</a>
+          {% endwith %}
+        </div>
+
+        <div class="app-nav-actions">
+          <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Alternar tema" title="Alternar entre modo claro e modo escuro">
+            <span id="theme-icon" aria-hidden="true">🌙</span>
+            <span id="theme-label">Escuro</span>
+          </button>
+        </div>
       </nav>
     </div>
   </header>
+  <div id="nav-overlay" class="nav-overlay" hidden></div>
   <main class="app-main">
     {% if messages %}
       <ul class="messages" role="status" aria-live="polite">

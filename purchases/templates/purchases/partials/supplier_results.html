@@ -13,16 +13,16 @@
       <tbody>
         {% for supplier in suppliers %}
           <tr>
-            <td>{{ supplier.name }}</td>
-            <td>
+            <td data-label="Nome">{{ supplier.name }}</td>
+            <td data-label="Estado">
               {% if supplier.is_active %}
                 <span class="status-badge status-badge--completed">Ativo</span>
               {% else %}
                 <span class="status-badge status-badge--archived">Inativo</span>
               {% endif %}
             </td>
-            <td>{{ supplier.purchase_count }}</td>
-            <td>
+            <td data-label="Compras">{{ supplier.purchase_count }}</td>
+            <td data-label="Ações">
               {% if can_change_supplier %}
                 <a class="button button--secondary button--small" href="{% url 'purchases:supplier_update' supplier.pk %}">Editar</a>
               {% else %}

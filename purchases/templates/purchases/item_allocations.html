@@ -88,17 +88,17 @@
           <tbody>
             {% for movement in movements %}
               <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
-                <td>{{ movement.movement_date|date:"d/m/Y" }}</td>
-                <td>{{ movement.to_location.name|default:"—" }}</td>
-                <td>{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
-                <td>
+                <td data-label="Data">{{ movement.movement_date|date:"d/m/Y" }}</td>
+                <td data-label="Destino">{{ movement.to_location.name|default:"—" }}</td>
+                <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
+                <td data-label="Estado">
                   {% if movement.is_cancelled %}
                     <span class="status-badge status-badge--archived">Cancelado</span>
                   {% else %}
                     <span class="status-badge status-badge--completed">Ativo</span>
                   {% endif %}
                 </td>
-                <td>
+                <td data-label="Ações">
                   {% if not movement.is_cancelled and perms.inventory.change_stockmovement %}
                     <a class="button button--danger button--small" href="{% url 'inventory:movement_cancel' movement.pk %}">Cancelar</a>
                   {% else %}
