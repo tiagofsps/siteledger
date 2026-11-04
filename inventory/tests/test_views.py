@@ -196,6 +196,51 @@ class InventoryViewTests(TestCase):
         self.assertContains(response, self.item.name)
         self.assertNotContains(response, other_item.name)
 
+    def test_movement_type_chooser_links_to_all_movement_forms(self):
+        response = self.client.get(reverse("inventory:movement_create"))
+
+        self.assertEqual(response.status_code, 200)
+        for url in (
+            reverse("inventory:initial_entry_create"),
+            reverse("inventory:transfer_create"),
+            reverse("inventory:return_to_warehouse"),
+            reverse("inventory:adjustment_in_create"),
+            reverse("inventory:adjustment_out_create"),
+        ):
+            with self.subTest(url=url):
+                self.assertContains(response, url)
+
+    def test_movement_type_chooser_requires_permission(self):
+        self.client.force_login(create_user("viewer"))
+        response = self.client.get(reverse("inventory:movement_create"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_movement_form_contains_wizard_progress(self):
+        response = self.client.get(reverse("inventory:initial_entry_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-wizard")
+        self.assertContains(response, "form-progress")
+        self.assertContains(response, ">Movimento<")
+        self.assertContains(response, ">Confirmar<")
+
+    def test_adjustment_missing_notes_opens_confirmation_step(self):
+        response = self.client.post(
+            reverse("inventory:adjustment_in_create"),
+            {
+                "item": self.item.pk,
+                "to_location": self.warehouse.pk,
+                "quantity": "1.000",
+                "movement_date": "2026-01-20",
+                "notes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["wizard_initial_step"], 2)
+        self.assertIn("notes", response.context["form"].errors)
+
     def test_permissions_are_required(self):
         self.client.force_login(create_user("viewer"))
         response = self.client.get(reverse("inventory:item_list"))

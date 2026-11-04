@@ -16,6 +16,11 @@ urlpatterns = [
     path("locations/", views.LocationListView.as_view(), name="location_list"),
     path("movements/", views.MovementListView.as_view(), name="movement_list"),
     path(
+        "movements/new/",
+        views.movement_type_select,
+        name="movement_create",
+    ),
+    path(
         "movements/new/initial/",
         views.initial_entry_create,
         name="initial_entry_create",

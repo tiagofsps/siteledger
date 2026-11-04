@@ -10,11 +10,7 @@
     </div>
     {% if can_add_movement %}
       <div class="page-actions">
-        <a class="button" href="{% url 'inventory:initial_entry_create' %}">Entrada inicial</a>
-        <a class="button button--secondary" href="{% url 'inventory:transfer_create' %}">Transferência</a>
-        <a class="button button--secondary" href="{% url 'inventory:return_to_warehouse' %}">Devolver ao armazém</a>
-        <a class="button button--secondary" href="{% url 'inventory:adjustment_in_create' %}">Correção de entrada</a>
-        <a class="button button--secondary" href="{% url 'inventory:adjustment_out_create' %}">Correção de saída</a>
+        <a class="button" href="{% url 'inventory:movement_create' %}">Novo movimento</a>
       </div>
     {% endif %}
   </div>

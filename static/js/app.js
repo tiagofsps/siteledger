@@ -227,4 +227,202 @@
   if (desktopQuery.matches) {
     closeNav(false);
   }
+
+  function initWizard(wizard) {
+    var steps = Array.prototype.slice.call(
+      wizard.querySelectorAll('[data-step]')
+    );
+    if (!steps.length) {
+      return;
+    }
+
+    var indicators = Array.prototype.slice.call(
+      wizard.querySelectorAll('[data-step-indicator]')
+    );
+    var nextButtons = wizard.querySelectorAll('[data-wizard-next]');
+    var backButtons = wizard.querySelectorAll('[data-wizard-back]');
+    var summary = wizard.querySelector('[data-wizard-summary]');
+    var current = parseInt(wizard.getAttribute('data-initial-step'), 10);
+
+    if (isNaN(current) || current < 1) {
+      current = 1;
+    }
+    if (current > steps.length) {
+      current = steps.length;
+    }
+
+    function updateSummary() {
+      if (!summary) {
+        return;
+      }
+
+      summary.innerHTML = '';
+      var fields = steps[0].querySelectorAll('input, select, textarea');
+
+      Array.prototype.forEach.call(fields, function (field) {
+        if (
+          field.type === 'hidden' ||
+          field.type === 'button' ||
+          field.type === 'submit' ||
+          field.disabled ||
+          !field.value
+        ) {
+          return;
+        }
+
+        var label = field.id
+          ? wizard.querySelector('label[for="' + field.id + '"]')
+          : null;
+        var labelText = label
+          ? label.textContent.trim().replace(/:\s*$/, '')
+          : field.name;
+        var value = field.value;
+
+        if (field.tagName === 'SELECT' && field.selectedIndex >= 0) {
+          value = field.options[field.selectedIndex].text;
+        } else if (field.type === 'date' && value.indexOf('-') !== -1) {
+          var dateParts = value.split('-');
+          value = dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
+        }
+
+        var item = document.createElement('div');
+        item.className = 'wizard-summary-item';
+
+        var labelElement = document.createElement('span');
+        labelElement.textContent = labelText;
+
+        var valueElement = document.createElement('strong');
+        valueElement.textContent = value;
+
+        item.appendChild(labelElement);
+        item.appendChild(valueElement);
+        summary.appendChild(item);
+      });
+    }
+
+    function updateProgress() {
+      Array.prototype.forEach.call(indicators, function (indicator) {
+        var stepNumber = parseInt(
+          indicator.getAttribute('data-step-indicator'),
+          10
+        );
+        indicator.classList.toggle('is-active', stepNumber === current);
+        indicator.classList.toggle('is-complete', stepNumber < current);
+
+        if (stepNumber === current) {
+          indicator.setAttribute('aria-current', 'step');
+        } else {
+          indicator.removeAttribute('aria-current');
+        }
+      });
+    }
+
+    function showStep(stepNumber, focus) {
+      if (stepNumber < 1) {
+        stepNumber = 1;
+      }
+      if (stepNumber > steps.length) {
+        stepNumber = steps.length;
+      }
+
+      current = stepNumber;
+      wizard.setAttribute('data-current-step', String(current));
+
+      Array.prototype.forEach.call(steps, function (step) {
+        var number = parseInt(step.getAttribute('data-step'), 10);
+        step.classList.toggle('is-active', number === current);
+      });
+
+      updateProgress();
+      if (current === 2) {
+        updateSummary();
+      }
+
+      if (focus) {
+        var active = wizard.querySelector('.wizard-step.is-active');
+        var firstField = active
+          ? active.querySelector(
+              'input:not([type="hidden"]), select, textarea, button'
+            )
+          : null;
+
+        if (firstField) {
+          firstField.focus();
+        }
+        wizard.scrollIntoView({ block: 'start' });
+      }
+    }
+
+    function validateCurrentStep() {
+      var active = wizard.querySelector('.wizard-step.is-active');
+      if (!active) {
+        return true;
+      }
+
+      var fields = active.querySelectorAll('input, select, textarea');
+      for (var index = 0; index < fields.length; index += 1) {
+        var field = fields[index];
+        if (
+          field.disabled ||
+          field.type === 'hidden' ||
+          field.type === 'button' ||
+          field.type === 'submit'
+        ) {
+          continue;
+        }
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    Array.prototype.forEach.call(nextButtons, function (button) {
+      button.addEventListener('click', function () {
+        if (validateCurrentStep()) {
+          showStep(current + 1, true);
+        }
+      });
+    });
+
+    Array.prototype.forEach.call(backButtons, function (button) {
+      button.addEventListener('click', function () {
+        showStep(current - 1, true);
+      });
+    });
+
+    wizard.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' || event.shiftKey) {
+        return;
+      }
+      if (
+        event.target.tagName === 'TEXTAREA' ||
+        event.target.tagName === 'BUTTON' ||
+        event.target.tagName === 'A'
+      ) {
+        return;
+      }
+      if (current === 1 && steps.length > 1) {
+        event.preventDefault();
+        if (validateCurrentStep()) {
+          showStep(2, true);
+        }
+      }
+    });
+
+    if (summary) {
+      steps[0].addEventListener('input', updateSummary);
+      steps[0].addEventListener('change', updateSummary);
+    }
+
+    wizard.setAttribute('data-ready', 'true');
+    showStep(current, false);
+  }
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll('[data-wizard]'),
+    initWizard
+  );
 })();

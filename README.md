@@ -180,7 +180,8 @@ Inventory:
 - `/inventory/items/<id>/`: item detail with recorded balances and movement history.
 - `/inventory/items/<id>/edit/`: edit an item.
 - `/inventory/locations/`: warehouse and project locations.
-- `/inventory/movements/`: movement history with item, location and type filters.
+- `/inventory/movements/`: movement history with search, item, location and type filters.
+- `/inventory/movements/new/`: choose the movement type and start guided recording.
 - `/inventory/movements/new/initial/`: record an initial entry.
 - `/inventory/movements/new/transfer/`: record a transfer.
 - `/inventory/movements/new/return/`: quick return to the warehouse.

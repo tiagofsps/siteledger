@@ -25,6 +25,16 @@ from .formsets import PurchaseItemFormSet
 from .models import Purchase, PurchaseItem, Supplier
 
 
+def _purchase_wizard_step(form, formset):
+    if not form.is_bound:
+        return 1
+    if form.errors:
+        return 1
+    if not formset.is_valid():
+        return 2
+    return 1
+
+
 class SupplierListView(PermissionRequiredMixin, ListView):
     permission_required = "purchases.view_supplier"
     model = Supplier
@@ -238,6 +248,7 @@ class PurchaseDetailView(PermissionRequiredMixin, DetailView):
 @require_http_methods(["GET", "POST"])
 def purchase_create(request):
     purchase = Purchase()
+    wizard_initial_step = 1
     if request.method == "POST":
         form = PurchaseForm(request.POST)
         formset = PurchaseItemFormSet(
@@ -259,6 +270,7 @@ def purchase_create(request):
                     pk=purchase.pk,
                 )
             return redirect(purchase.get_absolute_url())
+        wizard_initial_step = _purchase_wizard_step(form, formset)
     else:
         form = PurchaseForm()
         formset = PurchaseItemFormSet(instance=purchase, prefix="items")
@@ -271,6 +283,7 @@ def purchase_create(request):
             "formset": formset,
             "form_title": "Nova compra",
             "submit_label": "Registar compra",
+            "wizard_initial_step": wizard_initial_step,
         },
     )
 
@@ -281,6 +294,7 @@ def purchase_update(request, pk):
     with transaction.atomic():
         purchase = get_object_or_404(Purchase.objects.select_for_update(), pk=pk)
         items = PurchaseItem.objects.select_for_update().filter(purchase=purchase)
+        wizard_initial_step = 1
 
         if request.method == "POST":
             form = PurchaseForm(request.POST, instance=purchase)
@@ -295,6 +309,7 @@ def purchase_update(request, pk):
                 formset.save()
                 messages.success(request, "A compra foi atualizada.")
                 return redirect(purchase.get_absolute_url())
+            wizard_initial_step = _purchase_wizard_step(form, formset)
         else:
             form = PurchaseForm(instance=purchase)
             formset = PurchaseItemFormSet(
@@ -312,6 +327,7 @@ def purchase_update(request, pk):
                 "purchase": purchase,
                 "form_title": "Editar compra",
                 "submit_label": "Guardar alterações",
+                "wizard_initial_step": wizard_initial_step,
             },
         )
 

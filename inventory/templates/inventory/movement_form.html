@@ -16,23 +16,52 @@
     </div>
   </div>
 
-  <form class="form-card" method="post">
+  <form
+    class="form-card wizard"
+    method="post"
+    data-wizard
+    data-initial-step="{{ wizard_initial_step|default:1 }}"
+    data-current-step="{{ wizard_initial_step|default:1 }}"
+  >
     {% csrf_token %}
     {{ form.non_field_errors }}
 
-    {% for field in form %}
-      <div class="form-field{% if field.errors %} form-field--error{% endif %}">
-        {{ field.label_tag }}
-        {{ field }}
-        {% if field.help_text %}
-          <p class="help-text">{{ field.help_text }}</p>
+    {% include "partials/form_progress.html" with step1="Movimento" step2="Confirmar" current_step=wizard_initial_step|default:1 %}
+
+    <section class="wizard-step" data-step="1">
+      {% for field in form %}
+        {% if field.name != "notes" %}
+          <div class="form-field{% if field.errors %} form-field--error{% endif %}">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+              <p class="help-text">{{ field.help_text }}</p>
+            {% endif %}
+            {{ field.errors }}
+          </div>
         {% endif %}
-        {{ field.errors }}
-      </div>
-    {% endfor %}
+      {% endfor %}
+    </section>
+
+    <section class="wizard-step" data-step="2">
+      {% if form.notes %}
+        <div class="form-field{% if form.notes.errors %} form-field--error{% endif %}">
+          {{ form.notes.label_tag }}
+          {{ form.notes }}
+          {% if form.notes.help_text %}
+            <p class="help-text">{{ form.notes.help_text }}</p>
+          {% endif %}
+          {{ form.notes.errors }}
+        </div>
+      {% endif %}
+
+      <div class="wizard-summary" data-wizard-summary aria-live="polite"></div>
+    </section>
 
     <div class="form-actions">
-      <button class="button" type="submit">{{ submit_label }}</button>
+      <button class="button wizard-next" type="button" data-wizard-next>Continuar</button>
+      <button class="button wizard-submit" type="submit">{{ submit_label }}</button>
+      <button class="button button--secondary wizard-back" type="button" data-wizard-back>Anterior</button>
       <a class="button button--secondary" href="{% url 'inventory:movement_list' %}">Cancelar</a>
     </div>
   </form>

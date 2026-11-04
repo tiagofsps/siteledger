@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Novo movimento | Movimentos{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'inventory:movement_list' %}">Movimentos</a>
+    <span aria-hidden="true">/</span>
+    <span>Novo movimento</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>Novo movimento</h1>
+      <p class="page-subtitle">Escolha o tipo de movimento que pretende registar.</p>
+    </div>
+  </div>
+
+  <div class="movement-type-list">
+    <a class="movement-type-card" href="{% url 'inventory:initial_entry_create' %}">
+      <h2>Entrada inicial</h2>
+      <p>Registar uma quantidade que entra no armazém ou numa obra.</p>
+    </a>
+    <a class="movement-type-card" href="{% url 'inventory:transfer_create' %}">
+      <h2>Transferência</h2>
+      <p>Mover uma quantidade entre o armazém e uma obra, ou entre obras.</p>
+    </a>
+    <a class="movement-type-card" href="{% url 'inventory:return_to_warehouse' %}">
+      <h2>Devolver ao armazém</h2>
+      <p>Devolver rapidamente uma quantidade de uma obra ao armazém.</p>
+    </a>
+    <a class="movement-type-card" href="{% url 'inventory:adjustment_in_create' %}">
+      <h2>Correção de entrada</h2>
+      <p>Registar uma correção positiva com justificação obrigatória.</p>
+    </a>
+    <a class="movement-type-card" href="{% url 'inventory:adjustment_out_create' %}">
+      <h2>Correção de saída</h2>
+      <p>Registar uma correção negativa com justificação obrigatória.</p>
+    </a>
+  </div>
+{% endblock %}
