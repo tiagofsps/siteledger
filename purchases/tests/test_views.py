@@ -100,6 +100,25 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(purchase_item.description, self.item.name)
         self.assertEqual(purchase_item.unit, self.item.unit)
 
+    def test_create_form_contains_wizard_progress(self):
+        response = self.client.get(reverse("purchases:purchase_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-wizard")
+        self.assertContains(response, "form-progress")
+        self.assertContains(response, ">Dados<")
+        self.assertContains(response, ">Artigos<")
+        self.assertContains(response, ">Alocação<")
+
+    def test_create_invalid_header_opens_first_step(self):
+        data = purchase_form_data(supplier=self.supplier, item=self.item)
+        data["supplier"] = ""
+
+        response = self.client.post(reverse("purchases:purchase_create"), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["wizard_initial_step"], 1)
+
     def test_create_without_catalogue_item_redirects_to_detail(self):
         data = purchase_form_data(supplier=self.supplier, item=None)
         data["items-0-description"] = "Material avulso"
@@ -137,6 +156,7 @@ class PurchaseViewTests(TestCase):
         response = self.client.post(reverse("purchases:purchase_create"), data)
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["formset"].instance.pk)
+        self.assertEqual(response.context["wizard_initial_step"], 2)
 
         response = self.client.post(
             reverse("purchases:purchase_create"),
@@ -184,6 +204,7 @@ class PurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "não pode ser inferior")
+        self.assertEqual(response.context["wizard_initial_step"], 2)
 
     def test_update_form_renders_parent_fk_hidden_field(self):
         purchase = create_purchase(supplier=self.supplier)

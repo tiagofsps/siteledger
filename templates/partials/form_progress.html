@@ -1,0 +1,28 @@
+<ol class="form-progress" aria-label="Progresso do formulário">
+  <li
+    class="form-progress-step{% if current_step > 1 %} is-complete{% endif %}{% if current_step == 1 %} is-active{% endif %}"
+    data-step-indicator="1"
+    {% if current_step == 1 %}aria-current="step"{% endif %}
+  >
+    <span class="form-progress-number" aria-hidden="true">1</span>
+    <span>{{ step1 }}</span>
+  </li>
+  <li
+    class="form-progress-step{% if current_step > 2 %} is-complete{% endif %}{% if current_step == 2 %} is-active{% endif %}"
+    data-step-indicator="2"
+    {% if current_step == 2 %}aria-current="step"{% endif %}
+  >
+    <span class="form-progress-number" aria-hidden="true">2</span>
+    <span>{{ step2 }}</span>
+  </li>
+  {% if step3 %}
+    <li
+      class="form-progress-step{% if current_step > 3 %} is-complete{% endif %}{% if current_step == 3 %} is-active{% endif %}"
+      data-step-indicator="3"
+      {% if current_step == 3 %}aria-current="step"{% endif %}
+    >
+      <span class="form-progress-number" aria-hidden="true">3</span>
+      <span>{{ step3 }}</span>
+    </li>
+  {% endif %}
+</ol>

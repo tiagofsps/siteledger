@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from .forms import (
@@ -92,8 +92,8 @@ class ItemDetailView(PermissionRequiredMixin, DetailView):
         context["can_change_item"] = self.request.user.has_perm(
             "inventory.change_item"
         )
-        context["can_add_movement"] = self.request.user.has_perm(
-            "inventory.add_stockmovement"
+        context["can_add_movement"] = self.request.user.has_perms(
+            MOVEMENT_PERMISSIONS
         )
         context["can_cancel_movement"] = self.request.user.has_perm(
             "inventory.change_stockmovement"
@@ -200,8 +200,8 @@ class MovementListView(PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["filter_form"] = self.get_filter_form()
-        context["can_add_movement"] = self.request.user.has_perm(
-            "inventory.add_stockmovement"
+        context["can_add_movement"] = self.request.user.has_perms(
+            MOVEMENT_PERMISSIONS
         )
         context["can_cancel_movement"] = self.request.user.has_perm(
             "inventory.change_stockmovement"
@@ -252,6 +252,10 @@ def _create_movement_view(
             messages.success(request, success_message)
             return redirect(movement)
 
+    wizard_initial_step = 1
+    if request.method == "POST" and form.errors and set(form.errors) == {"notes"}:
+        wizard_initial_step = 2
+
     return render(
         request,
         "inventory/movement_form.html",
@@ -259,8 +263,15 @@ def _create_movement_view(
             "form": form,
             "form_title": title,
             "submit_label": submit_label,
+            "wizard_initial_step": wizard_initial_step,
         },
     )
+
+
+@require_GET
+@permission_required(MOVEMENT_PERMISSIONS, raise_exception=True)
+def movement_type_select(request):
+    return render(request, "inventory/movement_type_select.html")
 
 
 @require_http_methods(["GET", "POST"])
