@@ -73,15 +73,22 @@ class ItemDetailView(PermissionRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["balances"] = get_item_location_balances(self.object)
-        context["movements"] = (
-            self.object.movements.select_related(
-                "from_location",
-                "to_location",
-                "created_by",
-                "cancelled_by",
-            )[:50]
+        context["can_view_movements"] = self.request.user.has_perm(
+            "inventory.view_stockmovement"
         )
+        if context["can_view_movements"]:
+            context["balances"] = get_item_location_balances(self.object)
+            context["movements"] = (
+                self.object.movements.select_related(
+                    "from_location",
+                    "to_location",
+                    "created_by",
+                    "cancelled_by",
+                )[:50]
+            )
+        else:
+            context["balances"] = []
+            context["movements"] = StockMovement.objects.none()
         context["can_change_item"] = self.request.user.has_perm(
             "inventory.change_item"
         )

@@ -74,6 +74,27 @@ class InventoryViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "inventory/partials/item_results.html")
 
+    def test_item_detail_hides_movements_without_movement_permission(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+        self.client.force_login(
+            create_user("item-viewer", permissions=("inventory.view_item",))
+        )
+
+        response = self.client.get(self.item.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.item.name)
+        self.assertNotContains(response, "Saldos registados")
+        self.assertNotContains(response, "Movimentos recentes")
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.item.get_absolute_url())
+        self.assertContains(response, "Saldos registados")
+        self.assertContains(response, "Movimentos recentes")
+
     def test_location_list_requires_permission(self):
         response = self.client.get(reverse("inventory:location_list"))
         self.assertEqual(response.status_code, 200)
