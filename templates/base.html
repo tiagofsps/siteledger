@@ -1,0 +1,87 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SiteLedger Operations Management{% endblock %}</title>
+  <script>
+    (function() {
+      var theme = localStorage.getItem('theme');
+      if (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <a class="app-brand" href="{% url 'projects:list' %}">
+        <img src="{% static 'img/logo.png' %}" alt="SiteLedger Logo" class="app-brand-logo">
+        <div class="app-brand-text">
+          <span class="app-brand-title">SiteLedger</span>
+          <span class="app-brand-subtitle">Gestão Operacional</span>
+        </div>
+      </a>
+      <nav class="app-nav" aria-label="Navegação principal">
+        <a class="app-nav-link" href="{% url 'projects:list' %}" title="Gestão e acompanhamento das obras da empresa">Obras</a>
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Alternar tema" title="Alternar entre modo claro e modo escuro">
+          <span id="theme-icon" aria-hidden="true">🌙</span>
+          <span id="theme-label">Escuro</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+  <main class="app-main">
+    {% if messages %}
+      <ul class="messages" role="status" aria-live="polite">
+        {% for message in messages %}
+          <li class="message message--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    (function() {
+      var toggleBtn = document.getElementById('theme-toggle');
+      var themeIcon = document.getElementById('theme-icon');
+      var themeLabel = document.getElementById('theme-label');
+
+      function getCurrentTheme() {
+        var current = document.documentElement.getAttribute('data-theme');
+        if (current) return current;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      function updateUI(theme) {
+        if (theme === 'dark') {
+          themeIcon.textContent = '☀️';
+          themeLabel.textContent = 'Claro';
+        } else {
+          themeIcon.textContent = '🌙';
+          themeLabel.textContent = 'Escuro';
+        }
+      }
+
+      var activeTheme = getCurrentTheme();
+      updateUI(activeTheme);
+
+      toggleBtn.addEventListener('click', function() {
+        var current = getCurrentTheme();
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateUI(next);
+      });
+    })();
+  </script>
+
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

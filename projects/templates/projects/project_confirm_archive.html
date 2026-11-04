@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Arquivar obra | Obras{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'projects:list' %}">Obras</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+    <span aria-hidden="true">/</span>
+    <span>Arquivar</span>
+  </nav>
+
+  <section class="confirmation-panel">
+    <h1>Arquivar obra</h1>
+    <p>Tem a certeza de que quer arquivar a obra “{{ project.name }}”?</p>
+    <p class="help-text">A obra mantém-se no histórico. A metadata fica apenas para consulta e deixará de aceitar novas entradas, mas continuará a permitir movimentos de saída.</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="confirmation-actions">
+        <button class="button button--danger" type="submit">Arquivar obra</button>
+        <a class="button button--secondary" href="{{ project.get_absolute_url }}">Cancelar</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

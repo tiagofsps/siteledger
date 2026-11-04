@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Obras | SiteLedger Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Obras</h1>
+      <p class="page-subtitle">Gestão e acompanhamento das obras da empresa (planeadas, em curso, concluídas e arquivadas).</p>
+    </div>
+    {% if can_add_project %}
+      <a class="button" href="{% url 'projects:create' %}">Nova obra</a>
+    {% endif %}
+  </div>
+
+  <form
+    class="filters"
+    method="get"
+    action="{% url 'projects:list' %}"
+    hx-get="{% url 'projects:list' %}"
+    hx-target="#projects-results"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    hx-trigger="submit, keyup changed delay:300ms, change"
+    hx-indicator="#projects-loading"
+  >
+    {{ filter_form.non_field_errors }}
+    <div class="filter-field filter-field--search">
+      {{ filter_form.q.label_tag }}
+      {{ filter_form.q }}
+      {{ filter_form.q.errors }}
+    </div>
+    <div class="filter-field">
+      {{ filter_form.estado.label_tag }}
+      {{ filter_form.estado }}
+      {{ filter_form.estado.errors }}
+    </div>
+    <div class="filter-actions">
+      <button class="button" type="submit">Filtrar</button>
+      <a class="button button--secondary" href="{% url 'projects:list' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p id="projects-loading" class="loading-indicator" role="status" aria-live="polite">
+    A carregar…
+  </p>
+
+  <div id="projects-results">
+    {% include "projects/partials/project_results.html" %}
+  </div>
+{% endblock %}
