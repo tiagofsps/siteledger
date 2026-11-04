@@ -1569,7 +1569,12 @@ textarea:focus-visible {
 /* Help */
 .help-page {
   margin: 0 auto;
-  max-width: 56rem;
+  max-width: 64rem;
+}
+
+.help-layout {
+  display: grid;
+  gap: 1rem;
 }
 
 .help-toc h2 {
@@ -1584,18 +1589,22 @@ textarea:focus-visible {
 
 .help-toc li {
   break-inside: avoid;
-  margin: 0.25rem 0;
+  margin: 0.1rem 0;
 }
 
 .help-toc a {
+  border-radius: var(--radius-control);
   color: var(--color-text);
+  display: block;
   font-weight: 600;
+  padding: 0.35rem 0.5rem;
   text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .help-toc a:hover {
+  background: var(--color-background);
   color: var(--color-accent);
-  text-decoration: underline;
 }
 
 .help-section {
@@ -1609,7 +1618,9 @@ textarea:focus-visible {
 }
 
 .help-section h2 {
+  border-left: 3px solid var(--color-accent);
   margin-top: 0;
+  padding-left: 0.65rem;
 }
 
 .help-section ul,
@@ -1619,6 +1630,14 @@ textarea:focus-visible {
 
 .help-section li + li {
   margin-top: 0.35rem;
+}
+
+.help-callout {
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-control);
+  color: var(--color-accent-soft-text);
+  padding: 0.75rem 1rem;
 }
 
 .help-faq dt {
@@ -1639,5 +1658,23 @@ textarea:focus-visible {
   .help-toc ul {
     column-gap: 2rem;
     columns: 2;
+  }
+}
+
+@media (min-width: 64rem) {
+  .help-layout {
+    align-items: start;
+    grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
+  }
+
+  .help-toc {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    position: sticky;
+    top: 1rem;
+  }
+
+  .help-toc ul {
+    columns: 1;
   }
 }
