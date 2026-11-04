@@ -68,7 +68,10 @@ Movement types:
 - Git.
 - PostgreSQL only for production execution.
 
-> **Compatibility note:** Django 5.2.18 officially supports Python up to 3.14. The project uses Python 3.15.2 in this phase, but that combination is not officially guaranteed. Before production, Python/Django compatibility must be reviewed and approved.
+> **Compatibility note:** Django 5.2.18 officially supports Python up to 3.14. Local
+> development uses Python 3.15.2, which is not officially guaranteed. The production
+> deployment therefore runs Python 3.14.10 on Render and in CI. The test suite passes on
+> both versions. Keep local and production behaviour aligned when changing dependencies.
 
 ## Virtual environment
 
@@ -257,6 +260,10 @@ python manage.py test inventory
 python manage.py makemigrations --check --dry-run
 ```
 
+Continuous integration runs the same checks on every push to `main` and every pull
+request, against PostgreSQL, using Python 3.14.10. See
+[`docs/render-deployment.md`](docs/render-deployment.md).
+
 ## Commit conventions
 
 Commit messages follow the conventions documented in
@@ -275,9 +282,12 @@ Commit messages follow the conventions documented in
 
 ## Production
 
+Render deployment is documented in
+[`docs/render-deployment.md`](docs/render-deployment.md).
+
 - Configure `DJANGO_DEBUG=False`, a real `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
-- Configure `DJANGO_DB_ENGINE=postgresql` and PostgreSQL credentials through environment variables.
+- Use `DATABASE_URL` for Render PostgreSQL; `DJANGO_DB_ENGINE=postgresql` and the `DB_*` variables remain available as the alternative.
 - Ensure HTTPS and the appropriate security headers.
 - Keep `media/` private. Documents must be served only by authenticated views with permission checks.
 - Do not serve `MEDIA_ROOT` directly from the web server.
-- Do not add Docker or hosting in this phase without authorisation.
+- Do not add Docker or other hosting providers without authorisation.
