@@ -30,10 +30,19 @@
       {{ filter_form.q }}
       {{ filter_form.q.errors }}
     </div>
-    <div class="filter-field">
-      {{ filter_form.estado.label_tag }}
-      {{ filter_form.estado }}
-      {{ filter_form.estado.errors }}
+    <button
+      class="button button--secondary filter-toggle"
+      type="button"
+      data-filter-toggle
+      aria-controls="project-secondary-filters"
+      aria-expanded="{% if filter_form.estado.value %}true{% else %}false{% endif %}"
+    >Filtros</button>
+    <div id="project-secondary-filters" class="filter-secondary{% if filter_form.estado.value %} is-open{% endif %}">
+      <div class="filter-field">
+        {{ filter_form.estado.label_tag }}
+        {{ filter_form.estado }}
+        {{ filter_form.estado.errors }}
+      </div>
     </div>
     <div class="filter-actions">
       <button class="button" type="submit">Filtrar</button>

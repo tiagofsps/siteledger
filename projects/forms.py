@@ -22,6 +22,7 @@ class ProjectFilterForm(forms.Form):
         label="Pesquisar",
         required=False,
         max_length=200,
+        widget=forms.SearchInput,
     )
     estado = forms.ChoiceField(
         label="Estado",

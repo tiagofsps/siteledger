@@ -59,6 +59,10 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn('id="app-nav"', html)
         self.assertIn('id="nav-close"', html)
         self.assertIn('id="nav-overlay"', html)
+        self.assertIn('id="search-toggle"', html)
+        self.assertIn('id="app-search-panel"', html)
+        self.assertIn('id="global-search"', html)
+        self.assertIn('id="global-search-results"', html)
         for label in ("Obras", "Compras", "Artigos", "Movimentos"):
             with self.subTest(label=label):
                 self.assertIn(f">{label}</a>", html)

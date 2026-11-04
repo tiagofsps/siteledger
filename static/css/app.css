@@ -237,7 +237,14 @@ textarea:focus-visible {
   display: flex;
 }
 
+.app-header-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
 .nav-toggle,
+.search-toggle,
 .nav-close {
   align-items: center;
   background: transparent;
@@ -256,9 +263,130 @@ textarea:focus-visible {
 }
 
 .nav-toggle:hover,
+.search-toggle:hover,
 .nav-close:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+.app-search {
+  margin: 0 auto;
+  max-width: var(--page-width);
+  padding: 0.75rem 1rem 0;
+}
+
+.app-search-form {
+  display: flex;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.app-search-form input[type="search"] {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  color: var(--color-text);
+  flex: 1;
+  font: inherit;
+  min-height: 2.75rem;
+  min-width: 0;
+  padding: 0.6rem 0.85rem;
+  transition: border-color 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  width: 100%;
+}
+
+.app-search-form input[type="search"]:focus {
+  border-color: var(--color-accent);
+}
+
+.search-results {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.12);
+  left: 0;
+  max-height: min(28rem, 65vh);
+  overflow-y: auto;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 45;
+}
+
+.search-results:empty {
+  display: none;
+}
+
+.search-result-groups {
+  display: grid;
+}
+
+.search-group {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem;
+}
+
+.search-group:last-child {
+  border-bottom: 0;
+}
+
+.search-group-header {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.search-group-header h2 {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.search-group-header a,
+.search-result-meta {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.search-list {
+  display: grid;
+  gap: 0.15rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-list a {
+  border-radius: 0.4rem;
+  color: var(--color-text);
+  display: block;
+  padding: 0.45rem 0.5rem;
+  text-decoration: none;
+}
+
+.search-list a:hover {
+  background: var(--color-background);
+  color: var(--color-accent);
+}
+
+.search-result-title {
+  display: block;
+  font-weight: 600;
+}
+
+.search-result-meta {
+  display: block;
+  margin-top: 0.1rem;
+}
+
+.search-empty {
+  color: var(--color-muted);
+  margin: 0;
+  padding: 0.85rem;
 }
 
 .nav-overlay {
@@ -483,6 +611,14 @@ textarea:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.filter-secondary {
+  display: contents;
+}
+
+.filter-toggle {
+  display: none;
 }
 
 .loading-indicator {
@@ -897,7 +1033,7 @@ textarea:focus-visible {
   }
 
   .filters--purchase {
-    grid-template-columns: minmax(14rem, 2fr) minmax(12rem, 1fr) minmax(12rem, 1fr) auto;
+    grid-template-columns: minmax(12rem, 2fr) minmax(10rem, 1fr) minmax(10rem, 1fr) auto;
   }
 
   .filters--supplier {
@@ -906,6 +1042,14 @@ textarea:focus-visible {
 
   .filters--transfer {
     grid-template-columns: minmax(14rem, 2fr) minmax(12rem, 1fr) minmax(12rem, 1fr) auto;
+  }
+
+  .filters--search {
+    grid-template-columns: minmax(16rem, 2fr) auto;
+  }
+
+  .filters--movement {
+    grid-template-columns: minmax(12rem, 2fr) repeat(3, minmax(8rem, 1fr)) auto;
   }
 
   .obra-list {
@@ -933,7 +1077,34 @@ textarea:focus-visible {
 
 /* Mobile shell and responsive data presentation */
 @media (max-width: 47.99rem) {
-  .js .nav-toggle {
+  .js .nav-toggle,
+  .js .search-toggle {
+    display: inline-flex;
+  }
+
+  .js .app-search {
+    display: none;
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .js .app-search.is-open {
+    display: block;
+  }
+
+  .search-results {
+    max-height: 60vh;
+  }
+
+  .js .filter-secondary {
+    display: none;
+  }
+
+  .js .filter-secondary.is-open {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .js .filter-toggle {
     display: inline-flex;
   }
 

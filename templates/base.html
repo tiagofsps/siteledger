@@ -29,16 +29,29 @@
           <span class="app-brand-subtitle">Gestão Operacional</span>
         </div>
       </a>
-      <button
-        id="nav-toggle"
-        class="nav-toggle"
-        type="button"
-        aria-controls="app-nav"
-        aria-expanded="false"
-        aria-label="Abrir menu"
-      >
-        <span aria-hidden="true">☰</span>
-      </button>
+      <div class="app-header-actions">
+        <button
+          id="search-toggle"
+          class="search-toggle"
+          type="button"
+          aria-controls="app-search-panel"
+          aria-expanded="false"
+          aria-label="Abrir pesquisa"
+        >
+          <span aria-hidden="true">🔍</span>
+        </button>
+
+        <button
+          id="nav-toggle"
+          class="nav-toggle"
+          type="button"
+          aria-controls="app-nav"
+          aria-expanded="false"
+          aria-label="Abrir menu"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+      </div>
 
       <nav id="app-nav" class="app-nav" aria-label="Navegação principal">
         <button
@@ -69,6 +82,29 @@
     </div>
   </header>
   <div id="nav-overlay" class="nav-overlay" hidden></div>
+
+  <div id="app-search-panel" class="app-search">
+    <form class="app-search-form" role="search" method="get" action="{% url 'search' %}">
+      <label class="visually-hidden" for="global-search">Pesquisar</label>
+      <input
+        id="global-search"
+        type="search"
+        name="q"
+        value="{{ request.GET.q|default:'' }}"
+        placeholder="Pesquisar obras, compras, artigos e movimentos"
+        autocomplete="off"
+        enterkeyhint="search"
+        hx-get="{% url 'search' %}"
+        hx-trigger="input changed delay:300ms, search"
+        hx-target="#global-search-results"
+        hx-swap="innerHTML"
+        hx-push-url="false"
+      >
+      <button class="button button--secondary" type="submit">Pesquisar</button>
+      <div id="global-search-results" class="search-results" aria-live="polite"></div>
+    </form>
+  </div>
+
   <main class="app-main">
     {% if messages %}
       <ul class="messages" role="status" aria-live="polite">

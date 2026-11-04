@@ -167,6 +167,35 @@ class InventoryViewTests(TestCase):
         )
         self.assertTemplateUsed(response, "inventory/partials/movement_results.html")
 
+    def test_movement_list_searches_notes(self):
+        other_item = create_item(name="Areia")
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("1"),
+            notes="pesquisa-movimento-unica",
+        )
+        create_initial_entry(
+            item=other_item,
+            location=self.warehouse,
+            quantity=Decimal("1"),
+            notes="outro-movimento",
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"q": "pesquisa-movimento-unica"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "inventory/partials/movement_results.html",
+        )
+        self.assertContains(response, self.item.name)
+        self.assertNotContains(response, other_item.name)
+
     def test_permissions_are_required(self):
         self.client.force_login(create_user("viewer"))
         response = self.client.get(reverse("inventory:item_list"))

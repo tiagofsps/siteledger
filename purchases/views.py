@@ -150,6 +150,7 @@ class PurchaseListView(PermissionRequiredMixin, ListView):
             queryset = queryset.filter(
                 Q(supplier__name__icontains=query)
                 | Q(items__description__icontains=query)
+                | Q(items__item__name__icontains=query)
                 | Q(notes__icontains=query)
             ).distinct()
         if supplier is not None:

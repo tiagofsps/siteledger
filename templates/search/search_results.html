@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Pesquisa | Partilha Louca Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Pesquisa</h1>
+      {% if query %}
+        <p class="page-subtitle">Resultados para “{{ query }}”.</p>
+      {% else %}
+        <p class="page-subtitle">Pesquise obras, compras, fornecedores, artigos e movimentos.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if query %}
+    {% include "search/partials/results.html" %}
+  {% else %}
+    <p class="empty-state">Introduza um termo de pesquisa.</p>
+  {% endif %}
+{% endblock %}

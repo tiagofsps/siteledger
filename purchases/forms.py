@@ -36,6 +36,7 @@ class SupplierFilterForm(forms.Form):
         label="Pesquisar",
         required=False,
         max_length=200,
+        widget=forms.SearchInput,
     )
 
 
@@ -121,6 +122,7 @@ class PurchaseFilterForm(forms.Form):
         label="Pesquisar",
         required=False,
         max_length=200,
+        widget=forms.SearchInput,
     )
     supplier = forms.ModelChoiceField(
         label="Fornecedor",

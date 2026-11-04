@@ -147,6 +147,10 @@ The Django Admin is available at `/admin/`. While no application-specific authen
 
 ## Application routes
 
+Search:
+
+- `/search/`: global search across projects, purchases, suppliers, items and movements, with an HTMX dropdown and a full results page.
+
 Projects:
 
 - `/projects/`: project list, search and filters.
@@ -235,7 +239,7 @@ Commit messages follow the conventions documented in
 
 ## Application structure
 
-- `config/`: project configuration, URLs and WSGI/ASGI entry points.
+- `config/`: project configuration, URLs, WSGI/ASGI entry points and the cross-cutting search view.
 - `projects/`: project model, forms, views, URLs, admin, templates and tests.
 - `purchases/`: supplier, purchase and purchase-line models, forms, formsets, services, views, URLs, templates and tests.
 - `inventory/`: item, location and stock-movement models, domain services, forms, views, URLs, templates, migrations and tests.

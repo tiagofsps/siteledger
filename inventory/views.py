@@ -171,9 +171,17 @@ class MovementListView(PermissionRequiredMixin, ListView):
         )
         form = self.get_filter_form()
         if form.is_valid():
+            query = form.cleaned_data["q"].strip()
             item = form.cleaned_data["item"]
             location = form.cleaned_data["location"]
             movement_type = form.cleaned_data["movement_type"]
+            if query:
+                queryset = queryset.filter(
+                    Q(item__name__icontains=query)
+                    | Q(notes__icontains=query)
+                    | Q(from_location__name__icontains=query)
+                    | Q(to_location__name__icontains=query)
+                )
             if item:
                 queryset = queryset.filter(item=item)
             if location:
