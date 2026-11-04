@@ -33,6 +33,8 @@
   --color-archived-text: #4b5563;
 
   --page-width: 72rem;
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
   --radius-pill: 999px;
 }
 
@@ -290,7 +292,7 @@ textarea:focus-visible {
 .app-search-form input[type="search"] {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   flex: 1;
   font: inherit;
@@ -308,7 +310,7 @@ textarea:focus-visible {
 .search-results {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.12);
   left: 0;
   max-height: min(28rem, 65vh);
@@ -367,7 +369,7 @@ textarea:focus-visible {
 }
 
 .search-list a {
-  border-radius: 0.4rem;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   display: block;
   padding: 0.45rem 0.5rem;
@@ -541,7 +543,7 @@ textarea:focus-visible {
 
 .message {
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   margin-bottom: 0.5rem;
   padding: 0.75rem 1rem;
 }
@@ -647,7 +649,7 @@ textarea:focus-visible {
   align-items: end;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   display: grid;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
@@ -672,7 +674,7 @@ textarea:focus-visible {
 .form-field textarea {
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 0.4rem;
+  border-radius: var(--radius-control);
   color: var(--color-text);
   font: inherit;
   padding: 0.6rem 0.7rem;
@@ -750,7 +752,7 @@ textarea:focus-visible {
 .confirmation-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   padding: 1rem;
   transition: border-color 0.15s ease, background-color 0.2s ease;
 }
@@ -869,7 +871,7 @@ textarea:focus-visible {
 .empty-state {
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   color: var(--color-muted);
   margin: 0;
   padding: 2rem 1rem;
@@ -896,7 +898,7 @@ textarea:focus-visible {
 .notice {
   background: var(--color-progress-soft);
   border: 1px solid var(--color-progress-text);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
   color: var(--color-progress-text);
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
@@ -1028,7 +1030,7 @@ textarea:focus-visible {
 .purchase-item-row {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.6rem;
+  border-radius: var(--radius-card);
   padding: 0.75rem;
 }
 
@@ -1278,7 +1280,7 @@ textarea:focus-visible {
   .form-card .form-actions,
   .form-card .confirmation-actions {
     background: var(--color-surface);
-    border-radius: 0 0 0.75rem 0.75rem;
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
     border-top: 1px solid var(--color-border);
     bottom: 0;
     flex-direction: column-reverse;
@@ -1318,7 +1320,7 @@ textarea:focus-visible {
   .data-table tr {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-card);
     margin-bottom: 0.75rem;
     padding: 0.75rem;
   }
@@ -1463,7 +1465,7 @@ textarea:focus-visible {
 .wizard-summary {
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   display: grid;
   gap: 0.5rem;
   margin-top: 1rem;
@@ -1503,7 +1505,7 @@ textarea:focus-visible {
 .movement-type-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-card);
   color: var(--color-text);
   display: block;
   padding: 1rem;
