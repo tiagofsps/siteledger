@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Reativar obra | Obras{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'projects:list' %}">Obras</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+    <span aria-hidden="true">/</span>
+    <span>Reativar</span>
+  </nav>
+
+  <section class="confirmation-panel">
+    <h1>Reativar obra</h1>
+    <p>Tem a certeza de que quer reativar a obra “{{ project.name }}”?</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="confirmation-actions">
+        <button class="button" type="submit">Reativar obra</button>
+        <a class="button button--secondary" href="{{ project.get_absolute_url }}">Cancelar</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

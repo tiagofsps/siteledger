@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} | Obras{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'projects:list' %}">Obras</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ project.name }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>{{ project.name }}</h1>
+      <p class="page-subtitle">
+        {% include "projects/partials/project_status_badge.html" with project=project %}
+      </p>
+    </div>
+    <div class="page-actions">
+      {% if can_change_project and not project.is_archived %}
+        <a class="button button--secondary" href="{% url 'projects:update' project.pk %}">Editar</a>
+        <a class="button button--danger" href="{% url 'projects:archive' project.pk %}">Arquivar</a>
+      {% elif can_change_project and project.is_archived %}
+        <a class="button" href="{% url 'projects:unarchive' project.pk %}">Reativar</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if project.is_archived %}
+    <p class="notice">
+      Esta obra está arquivada. A metadata está apenas para consulta.
+      Ainda são permitidos movimentos de saída para devolver ou mover quantidades.
+      Estado anterior: {{ project.get_status_display }}.
+    </p>
+  {% endif %}
+
+  <section class="detail-panel" aria-labelledby="project-detail">
+    <h2 id="project-detail" class="visually-hidden">Detalhe da obra</h2>
+    <dl class="detail-list">
+      <div>
+        <dt>Morada</dt>
+        <dd>{{ project.address|default:"—"|linebreaksbr }}</dd>
+      </div>
+      <div>
+        <dt>Data de início</dt>
+        <dd>{{ project.start_date|date:"d/m/Y"|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt>Estado</dt>
+        <dd>{% include "projects/partials/project_status_badge.html" with project=project %}</dd>
+      </div>
+      {% if project.description %}
+        <div>
+          <dt>Descrição</dt>
+          <dd>{{ project.description|linebreaks }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  {% if can_view_movements %}
+    <section class="section-block" aria-labelledby="project-balances">
+      <div class="section-header">
+        <div>
+          <h2 id="project-balances">Saldos registados</h2>
+          <p class="page-subtitle">Quantidades registadas na localização desta obra. Não representam stock físico confirmado.</p>
+        </div>
+      </div>
+      <p class="empty-state">Ainda não existem movimentos registados para esta obra.</p>
+    </section>
+  {% endif %}
+
+  <p class="record-meta">
+    Criada em {{ project.created_at|date:"d/m/Y H:i" }}.
+    Última atualização em {{ project.updated_at|date:"d/m/Y H:i" }}.
+  </p>
+{% endblock %}

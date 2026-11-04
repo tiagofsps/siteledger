@@ -1,0 +1,41 @@
+{% if projects %}
+  <div class="record-grid">
+    {% for project in projects %}
+      <article class="record-card">
+        <div class="record-card-header">
+          <div>
+            <h2 class="record-card-title">
+              <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+            </h2>
+            <p class="record-card-meta">{{ project.address|default:"Sem morada" }}</p>
+          </div>
+          {% include "projects/partials/project_status_badge.html" with project=project %}
+        </div>
+        <dl class="record-card-details">
+          <div>
+            <dt>Início</dt>
+            <dd>{{ project.start_date|date:"d/m/Y"|default:"—" }}</dd>
+          </div>
+          <div>
+            <dt>Atualizada</dt>
+            <dd>{{ project.updated_at|date:"d/m/Y" }}</dd>
+          </div>
+        </dl>
+      </article>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination" aria-label="Paginação">
+      {% if page_obj.has_previous %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.next_page_number }}">Seguinte</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <p class="empty-state">Ainda não existem obras registadas.</p>
+{% endif %}

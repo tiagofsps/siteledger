@@ -1,0 +1,9 @@
+{% if project.is_archived %}
+  <span class="status-badge status-badge--archived">Arquivada</span>
+{% elif project.status == "planned" %}
+  <span class="status-badge status-badge--planned">Planeada</span>
+{% elif project.status == "in_progress" %}
+  <span class="status-badge status-badge--progress">Em curso</span>
+{% else %}
+  <span class="status-badge status-badge--completed">Concluída</span>
+{% endif %}
