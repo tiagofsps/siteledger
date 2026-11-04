@@ -252,7 +252,6 @@ textarea:focus-visible {
 }
 
 .nav-toggle,
-.search-toggle,
 .nav-close {
   align-items: center;
   background: transparent;
@@ -271,7 +270,6 @@ textarea:focus-visible {
 }
 
 .nav-toggle:hover,
-.search-toggle:hover,
 .nav-close:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
@@ -1173,18 +1171,12 @@ textarea:focus-visible {
 
 /* Mobile shell and responsive data presentation */
 @media (max-width: 47.99rem) {
-  .js .nav-toggle,
-  .js .search-toggle {
+  .js .nav-toggle {
     display: inline-flex;
   }
 
-  .js .app-search {
-    display: none;
+  .app-search {
     padding: 0.75rem 0.75rem 0;
-  }
-
-  .js .app-search.is-open {
-    display: block;
   }
 
   .search-results {
