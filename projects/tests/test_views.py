@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from inventory.models import Location
 from projects.models import Project
 
 from .base import create_project, create_user
@@ -43,6 +44,26 @@ class ProjectViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Project.objects.filter(name="Obra Nova").exists())
+
+    def test_create_project_creates_project_location(self):
+        response = self.client.post(
+            reverse("projects:create"),
+            {
+                "name": "Obra com localização",
+                "address": "",
+                "description": "",
+                "start_date": "",
+                "status": Project.Status.PLANNED,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        project = Project.objects.get(name="Obra com localização")
+        self.assertTrue(
+            Location.objects.filter(
+                project=project,
+                location_type=Location.Type.PROJECT,
+            ).exists()
+        )
 
     def test_detail_and_update(self):
         project = create_project(name="Obra Original")

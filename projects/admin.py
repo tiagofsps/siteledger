@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from inventory.services import ensure_project_location
+
 from .models import Project
 
 
@@ -11,6 +13,10 @@ class ProjectAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
     ordering = ("name",)
     readonly_fields = ("archived_at", "created_at", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        ensure_project_location(obj)
 
     def has_delete_permission(self, request, obj=None):
         return False

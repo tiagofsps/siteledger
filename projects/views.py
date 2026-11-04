@@ -1,10 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+
+from inventory.models import StockMovement
+from inventory.services import ensure_project_location, get_project_location_balances
 
 from .forms import ProjectFilterForm, ProjectForm
 from .models import Project
@@ -80,6 +84,24 @@ class ProjectDetailView(PermissionRequiredMixin, DetailView):
         context["can_view_movements"] = self.request.user.has_perm(
             "inventory.view_stockmovement"
         )
+        if context["can_view_movements"]:
+            location, balances = get_project_location_balances(self.object)
+            context["project_location"] = location
+            context["balances"] = balances
+            if location is None:
+                context["movements"] = StockMovement.objects.none()
+            else:
+                context["movements"] = (
+                    StockMovement.objects.filter(
+                        Q(from_location=location) | Q(to_location=location)
+                    )
+                    .select_related(
+                        "item",
+                        "from_location",
+                        "to_location",
+                        "created_by",
+                    )[:50]
+                )
         return context
 
 
@@ -94,7 +116,9 @@ class ProjectCreateView(PermissionRequiredMixin, CreateView):
     }
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)
+            ensure_project_location(self.object)
         messages.success(
             self.request,
             f"A obra “{self.object.name}” foi criada.",
@@ -120,7 +144,9 @@ class ProjectUpdateView(PermissionRequiredMixin, UpdateView):
         return super().get_queryset().filter(archived_at__isnull=True)
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)
+            ensure_project_location(self.object)
         messages.success(
             self.request,
             f"A obra “{self.object.name}” foi atualizada.",
