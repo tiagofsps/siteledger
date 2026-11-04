@@ -13,10 +13,10 @@
       <tbody>
         {% for purchase in purchases %}
           <tr>
-            <td><a href="{{ purchase.get_absolute_url }}">{{ purchase.purchase_date|date:"d/m/Y" }}</a></td>
-            <td>{{ purchase.supplier.name }}</td>
-            <td>{{ purchase.item_count }}</td>
-            <td>{{ purchase.total|floatformat:2 }} €</td>
+            <td data-label="Data"><a href="{{ purchase.get_absolute_url }}">{{ purchase.purchase_date|date:"d/m/Y" }}</a></td>
+            <td data-label="Fornecedor">{{ purchase.supplier.name }}</td>
+            <td data-label="Artigos">{{ purchase.item_count }}</td>
+            <td data-label="Total">{{ purchase.total|floatformat:2 }} €</td>
           </tr>
         {% endfor %}
       </tbody>

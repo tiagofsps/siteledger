@@ -107,10 +107,10 @@
                   <tbody>
                     {% for movement in item.movements.all %}
                       <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
-                        <td>{{ movement.movement_date|date:"d/m/Y" }}</td>
-                        <td>{{ movement.to_location.name|default:"—" }}</td>
-                        <td>{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
-                        <td>
+                        <td data-label="Data">{{ movement.movement_date|date:"d/m/Y" }}</td>
+                        <td data-label="Destino">{{ movement.to_location.name|default:"—" }}</td>
+                        <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
+                        <td data-label="Estado">
                           {% if movement.is_cancelled %}
                             <span class="status-badge status-badge--archived">Cancelado</span>
                           {% else %}

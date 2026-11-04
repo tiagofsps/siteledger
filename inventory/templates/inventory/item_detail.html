@@ -52,14 +52,14 @@
             <tbody>
               {% for balance in balances %}
                 <tr>
-                  <td>
+                  <td data-label="Localização">
                     {% if balance.location.project %}
                       <a href="{{ balance.location.project.get_absolute_url }}">{{ balance.location.name }}</a>
                     {% else %}
                       {{ balance.location.name }}
                     {% endif %}
                   </td>
-                  <td>{{ balance.quantity }} {{ item.unit }}</td>
+                  <td data-label="Quantidade">{{ balance.quantity }} {{ item.unit }}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -93,12 +93,12 @@
             <tbody>
               {% for movement in movements %}
                 <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
-                  <td><a href="{{ movement.get_absolute_url }}">{{ movement.movement_date|date:"d/m/Y" }}</a></td>
-                  <td>{{ movement.get_movement_type_display }}</td>
-                  <td>{{ movement.from_location|default:"—" }}</td>
-                  <td>{{ movement.to_location|default:"—" }}</td>
-                  <td>{{ movement.quantity }} {{ item.unit }}</td>
-                  <td>{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
+                  <td data-label="Data"><a href="{{ movement.get_absolute_url }}">{{ movement.movement_date|date:"d/m/Y" }}</a></td>
+                  <td data-label="Tipo">{{ movement.get_movement_type_display }}</td>
+                  <td data-label="Origem">{{ movement.from_location|default:"—" }}</td>
+                  <td data-label="Destino">{{ movement.to_location|default:"—" }}</td>
+                  <td data-label="Quantidade">{{ movement.quantity }} {{ item.unit }}</td>
+                  <td data-label="Estado">{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
                 </tr>
               {% endfor %}
             </tbody>

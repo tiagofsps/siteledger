@@ -1,5 +1,6 @@
 from django.apps import apps
 from django.conf import settings
+from django.contrib.staticfiles import finders
 from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -47,6 +48,23 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn("Partilha Louca Operations Management", html)
         self.assertIn("/static/vendor/htmx.min.js", html)
         self.assertIn("/static/css/app.css", html)
+        self.assertIn("/static/js/app.js", html)
+
+    def test_base_template_contains_mobile_navigation(self):
+        html = render_to_string("base.html")
+
+        self.assertIn('id="nav-toggle"', html)
+        self.assertIn('aria-controls="app-nav"', html)
+        self.assertIn('aria-expanded="false"', html)
+        self.assertIn('id="app-nav"', html)
+        self.assertIn('id="nav-close"', html)
+        self.assertIn('id="nav-overlay"', html)
+        for label in ("Obras", "Compras", "Artigos", "Movimentos"):
+            with self.subTest(label=label):
+                self.assertIn(f">{label}</a>", html)
+
+    def test_mobile_javascript_asset_is_available(self):
+        self.assertIsNotNone(finders.find("js/app.js"))
 
 
 class AdminAuthenticationTests(TestCase):
