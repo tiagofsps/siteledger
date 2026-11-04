@@ -71,6 +71,7 @@
               <a class="app-nav-link{% if path|slice:':11' == '/purchases/' %} app-nav-link--active{% endif %}" href="{% url 'purchases:purchase_list' %}" title="Compras e fornecedores">Compras</a>
               <a class="app-nav-link{% if path|slice:':17' == '/inventory/items/' or path|slice:':21' == '/inventory/locations/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:item_list' %}" title="Catálogo de materiais e equipamentos">Artigos</a>
               <a class="app-nav-link{% if path|slice:':21' == '/inventory/movements/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:movement_list' %}" title="Histórico de movimentos e saldos registados">Movimentos</a>
+              <a class="app-nav-link{% if path|slice:':7' == '/ajuda/' %} app-nav-link--active{% endif %}" href="{% url 'help' %}" title="Guia de utilização do sistema">Ajuda</a>
             {% endwith %}
           </div>
 

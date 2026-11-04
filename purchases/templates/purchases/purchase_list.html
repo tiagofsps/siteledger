@@ -6,10 +6,16 @@
   <div class="page-header">
     <div>
       <h1>Compras</h1>
-      <p class="page-subtitle">Registo de compras de materiais e equipamentos.</p>
     </div>
-    {% if can_add_purchase %}
-      <a class="button" href="{% url 'purchases:purchase_create' %}">Nova compra</a>
+    {% if can_add_purchase or can_view_suppliers %}
+      <div class="page-actions">
+        {% if can_view_suppliers %}
+          <a class="button button--secondary" href="{% url 'purchases:supplier_list' %}">Fornecedores</a>
+        {% endif %}
+        {% if can_add_purchase %}
+          <a class="button" href="{% url 'purchases:purchase_create' %}">Nova compra</a>
+        {% endif %}
+      </div>
     {% endif %}
   </div>
 

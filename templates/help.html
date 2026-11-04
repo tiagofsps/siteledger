@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Ajuda | Partilha Louca Operations Management{% endblock %}
+
+{% block content %}
+  <div class="help-page">
+    <div class="page-header">
+      <div>
+        <h1>Ajuda</h1>
+        <p class="page-subtitle">Guia de utilização do sistema.</p>
+      </div>
+    </div>
+
+    <nav class="detail-panel help-toc" aria-labelledby="help-toc-title">
+      <h2 id="help-toc-title">Índice</h2>
+      <ul>
+        <li><a href="#como-funciona">Como funciona o sistema</a></li>
+        <li><a href="#fluxo-rapido">Fluxo rápido</a></li>
+        <li><a href="#acesso">Entrar e sair</a></li>
+        <li><a href="#obras">Obras</a></li>
+        <li><a href="#fornecedores">Fornecedores</a></li>
+        <li><a href="#artigos">Artigos</a></li>
+        <li><a href="#compras">Compras</a></li>
+        <li><a href="#alocacao">Alocação de compras</a></li>
+        <li><a href="#movimentos">Movimentos</a></li>
+        <li><a href="#saldos">Saldos registados</a></li>
+        <li><a href="#correcoes">Correções e cancelamentos</a></li>
+        <li><a href="#pesquisa">Pesquisa e filtros</a></li>
+        <li><a href="#erros-comuns">Erros comuns</a></li>
+      </ul>
+    </nav>
+
+    <article class="detail-panel help-content">
+      <section class="help-section" id="como-funciona" aria-labelledby="como-funciona-title">
+        <h2 id="como-funciona-title">Como funciona o sistema</h2>
+        <p>O sistema separa três ideias diferentes:</p>
+        <ul>
+          <li><strong>Artigos</strong> é o catálogo partilhado. Indica o nome, a categoria e a unidade de referência de cada material ou equipamento. Não representa stock.</li>
+          <li><strong>Compras</strong> regista o que foi comprado a um fornecedor. Também não cria stock por si só.</li>
+          <li><strong>Movimentos</strong> registam as entradas, transferências, devoluções e correções de quantidades entre localizações.</li>
+        </ul>
+        <p>Uma compra só passa a ter quantidades registadas numa localização depois de ser alocada. A alocação cria uma entrada inicial associada à linha da compra.</p>
+        <p><strong>Importante:</strong> os saldos apresentados são saldos registados a partir do histórico de movimentos. Não são uma contagem de stock físico confirmada. O sistema não faz inventários, contagens ou cálculos automáticos de consumo.</p>
+      </section>
+
+      <section class="help-section" id="fluxo-rapido" aria-labelledby="fluxo-rapido-title">
+        <h2 id="fluxo-rapido-title">Fluxo rápido</h2>
+        <ol>
+          <li>Crie os artigos necessários em <strong>Artigos</strong>.</li>
+          <li>Crie os fornecedores em <strong>Compras → Fornecedores</strong>.</li>
+          <li>Crie a obra em <strong>Obras</strong>.</li>
+          <li>Registe a compra em <strong>Compras</strong>, com o fornecedor, a data, o total e as linhas.</li>
+          <li>Aloque as quantidades compradas ao armazém ou a uma obra.</li>
+          <li>Use <strong>Movimentos</strong> para transferir, devolver ou corrigir quantidades.</li>
+          <li>Consulte os saldos e o histórico na obra, no artigo ou em <strong>Movimentos</strong>.</li>
+        </ol>
+      </section>
+
+      <section class="help-section" id="acesso" aria-labelledby="acesso-title">
+        <h2 id="acesso-title">Entrar e sair</h2>
+        <p>O acesso é feito em <strong>Entrar</strong>. A conta é criada e gerida pelo administrador; não existe registo público nem criação autónoma de contas.</p>
+        <p>Para terminar a sessão, use <strong>Sair</strong> no menu. Se precisar de recuperar a palavra-passe, contacte o administrador.</p>
+      </section>
+
+      <section class="help-section" id="obras" aria-labelledby="obras-title">
+        <h2 id="obras-title">Obras</h2>
+        <p>Cada obra tem uma localização própria, criada automaticamente. A obra pode ser planeada, estar em curso ou concluída.</p>
+        <p>Uma obra arquivada mantém a informação disponível para consulta, mas não aceita novas entradas. Continua a permitir movimentos de saída para que as quantidades possam ser devolvidas ou transferidas.</p>
+        <p>Uma obra concluída pode manter quantidades registadas; não é arquivada automaticamente.</p>
+      </section>
+
+      <section class="help-section" id="fornecedores" aria-labelledby="fornecedores-title">
+        <h2 id="fornecedores-title">Fornecedores</h2>
+        <p>Os fornecedores são criados e editados em <strong>Compras → Fornecedores</strong>.</p>
+        <p>Um fornecedor inativo continua visível nas compras antigas, mas não é apresentado em novas compras.</p>
+      </section>
+
+      <section class="help-section" id="artigos" aria-labelledby="artigos-title">
+        <h2 id="artigos-title">Artigos</h2>
+        <p>O catálogo é partilhado por materiais, equipamentos e materiais reutilizáveis. Cada artigo tem uma única unidade de referência; não há conversão de unidades.</p>
+        <p>Os artigos não podem ser eliminados. Quando deixam de ser usados, devem ser desativados. Um artigo inativo mantém-se no histórico, mas não é oferecido em novos registos operacionais.</p>
+        <p>Na página do artigo pode consultar os saldos registados por localização e o histórico de movimentos.</p>
+      </section>
+
+      <section class="help-section" id="compras" aria-labelledby="compras-title">
+        <h2 id="compras-title">Compras</h2>
+        <p>Uma compra tem fornecedor, data, total e observações opcionais. O total da compra é independente da soma dos subtotais das linhas e não é apresentado como despesa de uma obra.</p>
+        <p>Cada linha da compra pode estar associada a um artigo do catálogo ou ser apenas texto livre. A descrição e a unidade ficam registadas como foram introduzidas, mesmo que o artigo seja alterado mais tarde.</p>
+        <p>O preço unitário é opcional. Quando não existe preço, o subtotal não é apresentado.</p>
+        <p>Uma compra pode ser guardada com quantidades por alocar. Uma linha sem artigo do catálogo não pode ser alocada até ser associada a um artigo. O limite é de 50 linhas por compra.</p>
+      </section>
+
+      <section class="help-section" id="alocacao" aria-labelledby="alocacao-title">
+        <h2 id="alocacao-title">Alocação de compras</h2>
+        <p>Depois de guardar uma compra, pode distribuir as quantidades compradas pelo armazém ou por uma obra. A alocação é opcional e pode ser feita mais tarde a partir da compra.</p>
+        <p>Uma linha pode ser dividida por várias localizações. Cada alocação cria uma entrada inicial ligada à linha da compra.</p>
+        <p>A quantidade total alocada nunca pode exceder a quantidade comprada. Uma linha pode ficar parcialmente alocada; a quantidade restante aparece como “por alocar”.</p>
+      </section>
+
+      <section class="help-section" id="movimentos" aria-labelledby="movimentos-title">
+        <h2 id="movimentos-title">Movimentos</h2>
+        <p>Os movimentos são o histórico das alterações de quantidade. Não podem ser editados depois de registados.</p>
+        <ul>
+          <li><strong>Entrada inicial:</strong> quantidade que entra numa localização, comprada ou já existente.</li>
+          <li><strong>Transferência:</strong> quantidade que passa de uma localização para outra. A origem e o destino têm de ser diferentes.</li>
+          <li><strong>Devolver ao armazém:</strong> atalho para uma transferência de uma obra para o armazém.</li>
+          <li><strong>Correção de entrada:</strong> correção positiva, com motivo obrigatório.</li>
+          <li><strong>Correção de saída:</strong> correção negativa, com motivo obrigatório.</li>
+        </ul>
+        <p>Uma transferência ou correção de saída não pode deixar o saldo da origem negativo. Artigos e localizações inativos não são aceites em novos movimentos.</p>
+      </section>
+
+      <section class="help-section" id="saldos" aria-labelledby="saldos-title">
+        <h2 id="saldos-title">Saldos registados</h2>
+        <p>Os saldos são calculados a partir dos movimentos ativos: entradas menos saídas. Movimentos cancelados não contam.</p>
+        <p>Pode consultar saldos na página da obra, na página do artigo e através do histórico de movimentos.</p>
+        <p>Estes valores são registos administrativos. Não representam stock físico confirmado e não substituem uma contagem real.</p>
+      </section>
+
+      <section class="help-section" id="correcoes" aria-labelledby="correcoes-title">
+        <h2 id="correcoes-title">Correções e cancelamentos</h2>
+        <p>Para corrigir um movimento, cancele-o e registe um novo movimento. O cancelamento é sempre total e exige um motivo.</p>
+        <p>O movimento cancelado permanece no histórico, mas deixa de contar para os saldos. Se o cancelamento deixasse algum saldo negativo, é recusado até que os movimentos dependentes sejam corrigidos.</p>
+      </section>
+
+      <section class="help-section" id="pesquisa" aria-labelledby="pesquisa-title">
+        <h2 id="pesquisa-title">Pesquisa e filtros</h2>
+        <p>A pesquisa global no topo procura obras, compras, fornecedores, artigos e movimentos. Os resultados respeitam as permissões do utilizador.</p>
+        <p>Nas listas, use a pesquisa e os filtros para reduzir os resultados. Em ecrãs pequenos, os filtros adicionais ficam dentro do botão <strong>Filtros</strong>.</p>
+      </section>
+
+      <section class="help-section" id="erros-comuns" aria-labelledby="erros-comuns-title">
+        <h2 id="erros-comuns-title">Erros comuns</h2>
+        <dl class="help-faq">
+          <dt>“A quantidade excede o que falta alocar neste artigo.”</dt>
+          <dd>A linha já tem parte da quantidade alocada. Verifique a quantidade restante antes de tentar novamente.</dd>
+
+          <dt>“O artigo da compra tem de estar associado ao catálogo.”</dt>
+          <dd>A linha foi criada apenas com texto livre. Edite a compra e associe um artigo do catálogo antes de alocar.</dd>
+
+          <dt>“A quantidade transferida excede o saldo registado na origem.”</dt>
+          <dd>A localização de origem não tem quantidade registada suficiente. Consulte os saldos e o histórico.</dd>
+
+          <dt>“Não é possível registar entradas numa obra arquivada.”</dt>
+          <dd>A obra está arquivada. Pode retirar quantidades dessa obra, mas não pode enviar novas entradas para ela.</dd>
+
+          <dt>“O artigo está inativo.” ou “A localização está inativa.”</dt>
+          <dd>O artigo ou a localização deixou de estar disponível para novos movimentos. Reative-o ou escolha outro.</dd>
+
+          <dt>“É obrigatório indicar um motivo.”</dt>
+          <dd>As correções e os cancelamentos exigem uma justificação.</dd>
+
+          <dt>“O movimento já está cancelado.”</dt>
+          <dd>O movimento já foi anulado e não pode ser cancelado novamente.</dd>
+
+          <dt>“Não foi possível iniciar sessão.”</dt>
+          <dd>Verifique o utilizador e a palavra-passe. Se o problema persistir, contacte o administrador.</dd>
+        </dl>
+      </section>
+    </article>
+  </div>
+{% endblock %}

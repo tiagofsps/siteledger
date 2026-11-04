@@ -72,7 +72,7 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn('id="theme-toggle"', html)
         self.assertIn('role="switch"', html)
         self.assertIn('class="theme-switch"', html)
-        for label in ("Obras", "Compras", "Artigos", "Movimentos"):
+        for label in ("Obras", "Compras", "Artigos", "Movimentos", "Ajuda"):
             with self.subTest(label=label):
                 self.assertIn(f">{label}</a>", html)
 
