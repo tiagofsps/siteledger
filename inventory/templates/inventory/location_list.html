@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Localizações | SiteLedger Operations Management{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Localizações</h1>
+      <p class="page-subtitle">Armazém lógico da empresa e localizações associadas às obras.</p>
+    </div>
+  </div>
+
+  {% if locations %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Localização</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Obra</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for location in locations %}
+            <tr>
+              <td>{{ location.name }}</td>
+              <td>{{ location.get_location_type_display }}</td>
+              <td>
+                {% if location.project %}
+                  <a href="{{ location.project.get_absolute_url }}">{{ location.project.name }}</a>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>{% if location.is_active %}Ativa{% else %}Inativa{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty-state">Ainda não existem localizações registadas.</p>
+  {% endif %}
+{% endblock %}

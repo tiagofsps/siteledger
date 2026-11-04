@@ -1,0 +1,44 @@
+{% if movements %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Data</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Artigo</th>
+          <th scope="col">Origem</th>
+          <th scope="col">Destino</th>
+          <th scope="col">Quantidade</th>
+          <th scope="col">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for movement in movements %}
+          <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
+            <td><a href="{{ movement.get_absolute_url }}">{{ movement.movement_date|date:"d/m/Y" }}</a></td>
+            <td>{{ movement.get_movement_type_display }}</td>
+            <td><a href="{{ movement.item.get_absolute_url }}">{{ movement.item.name }}</a></td>
+            <td>{{ movement.from_location|default:"—" }}</td>
+            <td>{{ movement.to_location|default:"—" }}</td>
+            <td>{{ movement.quantity }} {{ movement.item.unit }}</td>
+            <td>{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination" aria-label="Paginação">
+      {% if page_obj.has_previous %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.next_page_number }}">Seguinte</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <p class="empty-state">Ainda não existem movimentos registados.</p>
+{% endif %}

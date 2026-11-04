@@ -7,7 +7,7 @@ from django.urls import reverse
 
 class ApplicationRegistryTests(SimpleTestCase):
     def test_business_apps_are_installed(self):
-        for app_label in ("projects",):
+        for app_label in ("projects", "purchases", "inventory"):
             with self.subTest(app_label=app_label):
                 self.assertTrue(apps.is_installed(app_label))
 

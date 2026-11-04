@@ -1,0 +1,51 @@
+{% if suppliers %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <caption class="visually-hidden">Fornecedores registados</caption>
+      <thead>
+        <tr>
+          <th scope="col">Nome</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Compras</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for supplier in suppliers %}
+          <tr>
+            <td>{{ supplier.name }}</td>
+            <td>
+              {% if supplier.is_active %}
+                <span class="status-badge status-badge--completed">Ativo</span>
+              {% else %}
+                <span class="status-badge status-badge--archived">Inativo</span>
+              {% endif %}
+            </td>
+            <td>{{ supplier.purchase_count }}</td>
+            <td>
+              {% if can_change_supplier %}
+                <a class="button button--secondary button--small" href="{% url 'purchases:supplier_update' supplier.pk %}">Editar</a>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination" aria-label="Paginação">
+      {% if page_obj.has_previous %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.next_page_number }}">Seguinte</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <p class="empty-state">Ainda não existem fornecedores registados.</p>
+{% endif %}

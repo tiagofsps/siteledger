@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Movimento #{{ movement.pk }} | Movimentos{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'inventory:movement_list' %}">Movimentos</a>
+    <span aria-hidden="true">/</span>
+    <span>Movimento #{{ movement.pk }}</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>{{ movement.get_movement_type_display }}</h1>
+      <p class="page-subtitle">{{ movement.item.name }} · {{ movement.quantity }} {{ movement.item.unit }}</p>
+    </div>
+    {% if can_cancel_movement and not movement.is_cancelled %}
+      <div class="page-actions">
+        <a class="button button--danger" href="{% url 'inventory:movement_cancel' movement.pk %}">Cancelar movimento</a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if movement.is_cancelled %}
+    <p class="notice">
+      Este movimento foi cancelado e não conta para os saldos.
+      Motivo: {{ movement.cancellation_reason }}
+    </p>
+  {% endif %}
+
+  <section class="detail-panel" aria-labelledby="movement-detail">
+    <h2 id="movement-detail" class="visually-hidden">Detalhe do movimento</h2>
+    <dl class="detail-list">
+      <div>
+        <dt>Data do movimento</dt>
+        <dd>{{ movement.movement_date|date:"d/m/Y" }}</dd>
+      </div>
+      <div>
+        <dt>Artigo</dt>
+        <dd><a href="{{ movement.item.get_absolute_url }}">{{ movement.item.name }}</a></dd>
+      </div>
+      <div>
+        <dt>Quantidade</dt>
+        <dd>{{ movement.quantity }} {{ movement.item.unit }}</dd>
+      </div>
+      <div>
+        <dt>Origem</dt>
+        <dd>{{ movement.from_location|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt>Destino</dt>
+        <dd>{{ movement.to_location|default:"—" }}</dd>
+      </div>
+      {% if movement.purchase_item %}
+        <div>
+          <dt>Linha de compra</dt>
+          <dd>
+            <a href="{% url 'purchases:purchase_detail' movement.purchase_item.purchase_id %}">
+              Compra #{{ movement.purchase_item.purchase_id }} — {{ movement.purchase_item.description }}
+            </a>
+          </dd>
+        </div>
+      {% endif %}
+      {% if movement.notes %}
+        <div>
+          <dt>Observações</dt>
+          <dd>{{ movement.notes|linebreaks }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  <p class="record-meta">
+    Registado em {{ movement.created_at|date:"d/m/Y H:i" }}{% if movement.created_by %} por {{ movement.created_by }}{% endif %}.
+    {% if movement.is_cancelled %}
+      Cancelado em {{ movement.cancelled_at|date:"d/m/Y H:i" }}{% if movement.cancelled_by %} por {{ movement.cancelled_by }}{% endif %}.
+    {% endif %}
+  </p>
+{% endblock %}

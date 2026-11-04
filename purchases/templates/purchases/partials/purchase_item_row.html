@@ -1,0 +1,37 @@
+<div class="purchase-item-row">
+  {{ form.id }}
+  {{ form.purchase }}
+  <div class="field-grid">
+    <div class="form-field{% if form.item.errors %} form-field--error{% endif %}">
+      {{ form.item.label_tag }}
+      {{ form.item }}
+      {{ form.item.errors }}
+    </div>
+    <div class="form-field{% if form.description.errors %} form-field--error{% endif %}">
+      {{ form.description.label_tag }}
+      {{ form.description }}
+      {{ form.description.errors }}
+    </div>
+    <div class="form-field{% if form.unit.errors %} form-field--error{% endif %}">
+      {{ form.unit.label_tag }}
+      {{ form.unit }}
+      {{ form.unit.errors }}
+    </div>
+    <div class="form-field{% if form.quantity.errors %} form-field--error{% endif %}">
+      {{ form.quantity.label_tag }}
+      {{ form.quantity }}
+      {{ form.quantity.errors }}
+    </div>
+    <div class="form-field{% if form.unit_price.errors %} form-field--error{% endif %}">
+      {{ form.unit_price.label_tag }}
+      {{ form.unit_price }}
+      {{ form.unit_price.errors }}
+    </div>
+  </div>
+  {% if form.DELETE %}
+    <label class="checkbox-field">{{ form.DELETE }} Remover artigo</label>
+  {% endif %}
+</div>
+{% if total_forms %}
+  <input type="hidden" name="items-TOTAL_FORMS" value="{{ total_forms }}" id="id_items-TOTAL_FORMS" hx-swap-oob="true">
+{% endif %}

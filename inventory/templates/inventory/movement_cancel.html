@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Cancelar movimento #{{ movement.pk }} | Movimentos{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'inventory:movement_list' %}">Movimentos</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ movement.get_absolute_url }}">Movimento #{{ movement.pk }}</a>
+    <span aria-hidden="true">/</span>
+    <span>Cancelar</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>Cancelar movimento</h1>
+      <p class="page-subtitle">O movimento permanece no histórico, mas deixa de contar para os saldos.</p>
+    </div>
+  </div>
+
+  <section class="confirmation-panel" aria-labelledby="movement-summary">
+    <h2 id="movement-summary" class="visually-hidden">Resumo do movimento</h2>
+    <dl class="detail-list">
+      <div>
+        <dt>Tipo</dt>
+        <dd>{{ movement.get_movement_type_display }}</dd>
+      </div>
+      <div>
+        <dt>Artigo</dt>
+        <dd>{{ movement.item.name }}</dd>
+      </div>
+      <div>
+        <dt>Quantidade</dt>
+        <dd>{{ movement.quantity }} {{ movement.item.unit }}</dd>
+      </div>
+      <div>
+        <dt>Origem</dt>
+        <dd>{{ movement.from_location|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt>Destino</dt>
+        <dd>{{ movement.to_location|default:"—" }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <form class="form-card" method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <div class="form-field{% if field.errors %} form-field--error{% endif %}">
+        {{ field.label_tag }}
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+
+    <div class="confirmation-actions">
+      <button class="button button--danger" type="submit">Cancelar movimento</button>
+      <a class="button button--secondary" href="{{ movement.get_absolute_url }}">Voltar</a>
+    </div>
+  </form>
+{% endblock %}

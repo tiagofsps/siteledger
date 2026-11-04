@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Fornecedores | Compras{% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1>Fornecedores</h1>
+      <p class="page-subtitle">Catálogo de fornecedores da empresa.</p>
+    </div>
+    {% if can_add_supplier %}
+      <a class="button" href="{% url 'purchases:supplier_create' %}">Novo fornecedor</a>
+    {% endif %}
+  </div>
+
+  <form
+    class="filters"
+    method="get"
+    action="{% url 'purchases:supplier_list' %}"
+    hx-get="{% url 'purchases:supplier_list' %}"
+    hx-target="#supplier-results"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    hx-trigger="submit, keyup changed delay:300ms"
+    hx-indicator="#supplier-loading"
+  >
+    <div class="filter-field filter-field--search">
+      {{ filter_form.q.label_tag }}
+      {{ filter_form.q }}
+      {{ filter_form.q.errors }}
+    </div>
+    <div class="filter-actions">
+      <button class="button" type="submit">Filtrar</button>
+      <a class="button button--secondary" href="{% url 'purchases:supplier_list' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p id="supplier-loading" class="loading-indicator" role="status" aria-live="polite">A carregar…</p>
+
+  <div id="supplier-results">
+    {% include "purchases/partials/supplier_results.html" %}
+  </div>
+{% endblock %}

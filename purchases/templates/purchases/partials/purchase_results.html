@@ -1,0 +1,39 @@
+{% if purchases %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <caption class="visually-hidden">Compras registadas</caption>
+      <thead>
+        <tr>
+          <th scope="col">Data</th>
+          <th scope="col">Fornecedor</th>
+          <th scope="col">Artigos</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for purchase in purchases %}
+          <tr>
+            <td><a href="{{ purchase.get_absolute_url }}">{{ purchase.purchase_date|date:"d/m/Y" }}</a></td>
+            <td>{{ purchase.supplier.name }}</td>
+            <td>{{ purchase.item_count }}</td>
+            <td>{{ purchase.total|floatformat:2 }} €</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination" aria-label="Paginação">
+      {% if page_obj.has_previous %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="button button--secondary button--small" href="?page={{ page_obj.next_page_number }}">Seguinte</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <p class="empty-state">Ainda não existem compras registadas.</p>
+{% endif %}
