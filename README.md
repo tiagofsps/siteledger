@@ -143,9 +143,29 @@ python manage.py seed_demo
 python manage.py runserver
 ```
 
-The Django Admin is available at `/admin/`. While no application-specific authentication interface exists, the admin login is also the temporary authentication point.
+The application login is available at `/login/`. The Django Admin remains available at `/admin/`.
+
+## Authentication
+
+The application uses Django's built-in authentication views with a custom login page. There is no public registration flow.
+
+- `/login/`: application login.
+- `/logout/`: POST-only logout action.
+
+Create the first administrator with:
+
+```bash
+python manage.py createsuperuser
+```
+
+Create the remaining users in the Django Admin at `/admin/auth/user/add/` and assign only the required permissions or groups. Password recovery is handled by the administrator through the Django Admin.
 
 ## Application routes
+
+Authentication:
+
+- `/login/`: application login.
+- `/logout/`: POST-only logout.
 
 Search:
 
@@ -212,7 +232,7 @@ Permissions can be assigned to users or groups in the Django Admin.
 
 ## Django Admin
 
-The Django Admin manages `Project` and the temporary authentication entry point. It does not allow deleting projects, does not allow changing `archived_at`, and shows archived projects as read-only.
+The Django Admin manages `Project` and user/permission administration. It does not allow deleting projects, does not allow changing `archived_at`, and shows archived projects as read-only.
 
 Purchase, purchase line, item, location and movement models are not registered in the Django Admin. Supplier management is performed through the application.
 

@@ -297,15 +297,17 @@ Mandatory rules:
 - Do not disable security, CSRF, authentication or permission checks to make tests pass.
 - Keep dependencies controlled and updated after review.
 
-### Temporary authentication state
+### Application authentication
 
-While no application-specific authentication interface exists:
-
-- `LOGIN_URL = "admin:login"`.
-- `LOGIN_REDIRECT_URL = "/admin/"`.
-- `LOGOUT_REDIRECT_URL = "/admin/login/"`.
-
-This configuration is temporary and must be replaced by application authentication when user views are created.
+- `LOGIN_URL = "login"`.
+- `LOGIN_REDIRECT_URL = "projects:list"`.
+- `LOGOUT_REDIRECT_URL = "login"`.
+- The application login page is `/login/`.
+- Logout is POST-only at `/logout/`.
+- There is no public registration or self-service account creation.
+- Users are created and managed by an administrator in the Django Admin.
+- Password recovery is handled by an administrator.
+- The Django Admin login remains available at `/admin/login/`.
 
 ## 11. Database and files
 
