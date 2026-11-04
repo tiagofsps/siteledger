@@ -37,6 +37,7 @@ Movement types:
 - Purchase totals are independent from item subtotals.
 - Item subtotals are displayed only when a unit price exists and use `ROUND_HALF_UP`.
 - A purchase and its lines may be saved partially or entirely unallocated.
+- After saving a purchase, quantities can be allocated immediately from the purchase allocation page, or later from the purchase record.
 - Each allocation creates an `INITIAL_ENTRY` movement linked to the purchase line.
 - Active allocations cannot exceed the purchase line quantity.
 - Purchase line quantities cannot be reduced below their active allocated quantity.
@@ -137,6 +138,7 @@ Purchases and suppliers:
 - `/purchases/new/`: record a purchase and its items.
 - `/purchases/<id>/`: purchase detail.
 - `/purchases/<id>/edit/`: edit a purchase and its items.
+- `/purchases/<id>/allocations/`: allocate remaining quantities across the purchase lines.
 - `/purchases/<purchase_id>/items/<item_id>/allocations/`: manage allocations for one purchase line.
 - `/purchases/suppliers/`: supplier list.
 - `/purchases/suppliers/new/`: create a supplier.

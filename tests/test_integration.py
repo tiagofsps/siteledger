@@ -12,6 +12,7 @@ from inventory.services import (
 )
 from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
 from projects.tests.base import create_project, create_user
+from purchases.models import Purchase
 from purchases.tests.base import create_purchase, create_purchase_item, create_supplier
 
 
@@ -22,6 +23,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
             permissions=(
                 "projects.view_project",
                 "purchases.view_purchase",
+                "purchases.add_purchase",
                 "purchases.change_purchase",
                 "inventory.view_item",
                 "inventory.view_location",
@@ -86,6 +88,51 @@ class PurchaseAllocationIntegrationTests(TestCase):
 
         response = self.client.get(self.project.get_absolute_url())
         self.assertContains(response, "Cancelado")
+
+    def test_purchase_registration_flows_into_allocation(self):
+        response = self.client.post(
+            reverse("purchases:purchase_create"),
+            {
+                "supplier": self.purchase.supplier.pk,
+                "purchase_date": "2026-01-10",
+                "total": "100.00",
+                "notes": "",
+                "items-TOTAL_FORMS": "1",
+                "items-INITIAL_FORMS": "0",
+                "items-MIN_NUM_FORMS": "0",
+                "items-MAX_NUM_FORMS": "50",
+                "items-0-item": self.item.pk,
+                "items-0-description": "",
+                "items-0-unit": "",
+                "items-0-quantity": "2.000",
+                "items-0-unit_price": "",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        purchase = Purchase.objects.latest("pk")
+        self.assertEqual(
+            response["Location"],
+            reverse("purchases:purchase_allocations", args=[purchase.pk]),
+        )
+
+        purchase_item = purchase.items.get()
+        response = self.client.post(
+            reverse("purchases:purchase_allocations", args=[purchase.pk]),
+            {
+                "item_pk": purchase_item.pk,
+                f"allocation-{purchase_item.pk}-location": self.location.pk,
+                f"allocation-{purchase_item.pk}-quantity": "2.000",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            location_balance(self.item, self.location),
+            Decimal("2"),
+        )
+
+        response = self.client.get(self.project.get_absolute_url())
+        self.assertContains(response, self.item.name)
+        self.assertContains(response, "2,000")
 
     def test_project_without_location_does_not_show_unrelated_movements(self):
         project = create_project(name="Obra sem localização")

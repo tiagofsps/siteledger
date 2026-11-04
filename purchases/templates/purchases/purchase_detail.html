@@ -16,6 +16,9 @@
     </div>
     {% if can_change_purchase %}
       <div class="page-actions">
+        {% if can_allocate and has_pending_allocations %}
+          <a class="button" href="{% url 'purchases:purchase_allocations' purchase.pk %}">Alocar quantidades</a>
+        {% endif %}
         <a class="button button--secondary" href="{% url 'purchases:purchase_update' purchase.pk %}">Editar</a>
       </div>
     {% endif %}
