@@ -22,88 +22,99 @@
 <body>
   <header class="app-header">
     <div class="app-header-inner">
-      <a class="app-brand" href="{% url 'projects:list' %}">
+      <a class="app-brand" href="{% if request.user.is_authenticated %}{% url 'projects:list' %}{% else %}{% url 'login' %}{% endif %}">
         <img src="{% static 'img/logo.png' %}" alt="SiteLedger Logo" class="app-brand-logo">
         <div class="app-brand-text">
           <span class="app-brand-title">SiteLedger</span>
           <span class="app-brand-subtitle">Gestão Operacional</span>
         </div>
       </a>
-      <div class="app-header-actions">
-        <button
-          id="search-toggle"
-          class="search-toggle"
-          type="button"
-          aria-controls="app-search-panel"
-          aria-expanded="false"
-          aria-label="Abrir pesquisa"
-        >
-          <span aria-hidden="true">🔍</span>
-        </button>
 
-        <button
-          id="nav-toggle"
-          class="nav-toggle"
-          type="button"
-          aria-controls="app-nav"
-          aria-expanded="false"
-          aria-label="Abrir menu"
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
-      </div>
+      {% if request.user.is_authenticated %}
+        <div class="app-header-actions">
+          <button
+            id="search-toggle"
+            class="search-toggle"
+            type="button"
+            aria-controls="app-search-panel"
+            aria-expanded="false"
+            aria-label="Abrir pesquisa"
+          >
+            <span aria-hidden="true">🔍</span>
+          </button>
 
-      <nav id="app-nav" class="app-nav" aria-label="Navegação principal">
-        <button
-          id="nav-close"
-          class="nav-close"
-          type="button"
-          aria-label="Fechar menu"
-        >
-          <span aria-hidden="true">×</span>
-        </button>
-
-        <div class="app-nav-links">
-          {% with path=request.path %}
-            <a class="app-nav-link{% if path == '/' or path|slice:':10' == '/projects/' %} app-nav-link--active{% endif %}" href="{% url 'projects:list' %}" title="Gestão e acompanhamento das obras da empresa">Obras</a>
-            <a class="app-nav-link{% if path|slice:':11' == '/purchases/' %} app-nav-link--active{% endif %}" href="{% url 'purchases:purchase_list' %}" title="Compras e fornecedores">Compras</a>
-            <a class="app-nav-link{% if path|slice:':17' == '/inventory/items/' or path|slice:':21' == '/inventory/locations/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:item_list' %}" title="Catálogo de materiais e equipamentos">Artigos</a>
-            <a class="app-nav-link{% if path|slice:':21' == '/inventory/movements/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:movement_list' %}" title="Histórico de movimentos e saldos registados">Movimentos</a>
-          {% endwith %}
-        </div>
-
-        <div class="app-nav-actions">
-          <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Alternar tema" title="Alternar entre modo claro e modo escuro">
-            <span id="theme-icon" aria-hidden="true">🌙</span>
-            <span id="theme-label">Escuro</span>
+          <button
+            id="nav-toggle"
+            class="nav-toggle"
+            type="button"
+            aria-controls="app-nav"
+            aria-expanded="false"
+            aria-label="Abrir menu"
+          >
+            <span aria-hidden="true">☰</span>
           </button>
         </div>
-      </nav>
+
+        <nav id="app-nav" class="app-nav" aria-label="Navegação principal">
+          <button
+            id="nav-close"
+            class="nav-close"
+            type="button"
+            aria-label="Fechar menu"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+
+          <div class="app-nav-links">
+            {% with path=request.path %}
+              <a class="app-nav-link{% if path == '/' or path|slice:':10' == '/projects/' %} app-nav-link--active{% endif %}" href="{% url 'projects:list' %}" title="Gestão e acompanhamento das obras da empresa">Obras</a>
+              <a class="app-nav-link{% if path|slice:':11' == '/purchases/' %} app-nav-link--active{% endif %}" href="{% url 'purchases:purchase_list' %}" title="Compras e fornecedores">Compras</a>
+              <a class="app-nav-link{% if path|slice:':17' == '/inventory/items/' or path|slice:':21' == '/inventory/locations/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:item_list' %}" title="Catálogo de materiais e equipamentos">Artigos</a>
+              <a class="app-nav-link{% if path|slice:':21' == '/inventory/movements/' %} app-nav-link--active{% endif %}" href="{% url 'inventory:movement_list' %}" title="Histórico de movimentos e saldos registados">Movimentos</a>
+            {% endwith %}
+          </div>
+
+          <div class="app-nav-actions">
+            {% include "partials/theme_toggle.html" %}
+            <form class="logout-form" method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="button button--secondary button--small" type="submit">Sair</button>
+            </form>
+          </div>
+        </nav>
+      {% else %}
+        <div class="app-header-actions">
+          {% include "partials/theme_toggle.html" %}
+        </div>
+      {% endif %}
     </div>
   </header>
-  <div id="nav-overlay" class="nav-overlay" hidden></div>
 
-  <div id="app-search-panel" class="app-search">
-    <form class="app-search-form" role="search" method="get" action="{% url 'search' %}">
-      <label class="visually-hidden" for="global-search">Pesquisar</label>
-      <input
-        id="global-search"
-        type="search"
-        name="q"
-        value="{{ request.GET.q|default:'' }}"
-        placeholder="Pesquisar obras, compras, artigos e movimentos"
-        autocomplete="off"
-        enterkeyhint="search"
-        hx-get="{% url 'search' %}"
-        hx-trigger="input changed delay:300ms, search"
-        hx-target="#global-search-results"
-        hx-swap="innerHTML"
-        hx-push-url="false"
-      >
-      <button class="button button--secondary" type="submit">Pesquisar</button>
-      <div id="global-search-results" class="search-results" aria-live="polite"></div>
-    </form>
-  </div>
+  {% if request.user.is_authenticated %}
+    <div id="nav-overlay" class="nav-overlay" hidden></div>
+
+    <div id="app-search-panel" class="app-search">
+      <form class="app-search-form" role="search" method="get" action="{% url 'search' %}">
+        <label class="visually-hidden" for="global-search">Pesquisar</label>
+        <input
+          id="global-search"
+          type="search"
+          name="q"
+          value="{{ request.GET.q|default:'' }}"
+          placeholder="Pesquisar obras, compras, artigos e movimentos"
+          autocomplete="off"
+          enterkeyhint="search"
+          hx-get="{% url 'search' %}"
+          hx-trigger="input changed delay:300ms, search"
+          hx-target="#global-search-results"
+          hx-swap="innerHTML"
+          hx-push-url="false"
+        >
+        <button class="button button--secondary" type="submit">Pesquisar</button>
+        <div id="global-search-results" class="search-results" aria-live="polite"></div>
+      </form>
+    </div>
+  {% endif %}
 
   <main class="app-main">
     {% if messages %}

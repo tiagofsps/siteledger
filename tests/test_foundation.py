@@ -1,8 +1,9 @@
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.staticfiles import finders
 from django.template.loader import render_to_string
-from django.test import SimpleTestCase, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 
 
@@ -25,7 +26,7 @@ class FoundationConfigurationTests(SimpleTestCase):
             "django.contrib.auth.middleware.LoginRequiredMiddleware",
             settings.MIDDLEWARE,
         )
-        self.assertEqual(settings.LOGIN_URL, "admin:login")
+        self.assertEqual(settings.LOGIN_URL, "login")
 
     def test_security_defaults_are_enabled(self):
         self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
@@ -42,8 +43,13 @@ class FoundationConfigurationTests(SimpleTestCase):
 
 
 class BaseTemplateTests(SimpleTestCase):
+    def render_base(self, user=None):
+        request = RequestFactory().get("/")
+        request.user = user or AnonymousUser()
+        return render_to_string("base.html", request=request)
+
     def test_base_template_renders_with_local_htmx(self):
-        html = render_to_string("base.html")
+        html = self.render_base()
 
         self.assertIn("SiteLedger Operations Management", html)
         self.assertIn("/static/vendor/htmx.min.js", html)
@@ -51,7 +57,7 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn("/static/js/app.js", html)
 
     def test_base_template_contains_mobile_navigation(self):
-        html = render_to_string("base.html")
+        html = self.render_base(User(username="tester"))
 
         self.assertIn('id="nav-toggle"', html)
         self.assertIn('aria-controls="app-nav"', html)
@@ -66,6 +72,15 @@ class BaseTemplateTests(SimpleTestCase):
         for label in ("Obras", "Compras", "Artigos", "Movimentos"):
             with self.subTest(label=label):
                 self.assertIn(f">{label}</a>", html)
+
+    def test_anonymous_base_hides_application_navigation(self):
+        html = self.render_base()
+
+        self.assertNotIn('id="nav-toggle"', html)
+        self.assertNotIn('id="app-nav"', html)
+        self.assertNotIn('id="global-search"', html)
+        self.assertIn('id="theme-toggle"', html)
+        self.assertIn(reverse("login"), html)
 
     def test_mobile_javascript_asset_is_available(self):
         self.assertIsNotNone(finders.find("js/app.js"))

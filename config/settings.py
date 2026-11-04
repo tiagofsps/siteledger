@@ -148,9 +148,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LOGIN_URL = "admin:login"
-LOGIN_REDIRECT_URL = "/admin/"
-LOGOUT_REDIRECT_URL = "/admin/login/"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "projects:list"
+LOGOUT_REDIRECT_URL = "login"
 
 
 # Internationalization

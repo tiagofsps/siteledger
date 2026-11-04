@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Entrar | SiteLedger Operations Management{% endblock %}
+
+{% block content %}
+  <section class="login-page" aria-labelledby="login-title">
+    <div class="form-card login-card">
+      <h1 id="login-title">Entrar</h1>
+      <p class="page-subtitle">Acesso restrito à equipa SiteLedger.</p>
+
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {{ form.non_field_errors }}
+
+        <div class="form-field{% if form.username.errors %} form-field--error{% endif %}">
+          {{ form.username.label_tag }}
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+
+        <div class="form-field{% if form.password.errors %} form-field--error{% endif %}">
+          {{ form.password.label_tag }}
+          {{ form.password }}
+          {{ form.password.errors }}
+        </div>
+
+        <div class="form-actions">
+          <button class="button" type="submit">Entrar</button>
+        </div>
+      </form>
+
+      <p class="help-text login-help">Acesso apenas para utilizadores autorizados. Contacte o administrador se precisar de recuperar o acesso.</p>
+    </div>
+  </section>
+{% endblock %}

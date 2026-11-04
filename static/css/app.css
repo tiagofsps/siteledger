@@ -235,6 +235,11 @@ textarea:focus-visible {
 .app-nav-actions {
   align-items: center;
   display: flex;
+  gap: 0.5rem;
+}
+
+.logout-form {
+  margin: 0;
 }
 
 .app-header-actions {
@@ -1149,11 +1154,15 @@ textarea:focus-visible {
   }
 
   .js .app-nav-actions {
+    flex-direction: column;
+    gap: 0.5rem;
     margin-top: auto;
     width: 100%;
   }
 
-  .js .app-nav-actions .theme-toggle-btn {
+  .js .app-nav-actions .theme-toggle-btn,
+  .js .app-nav-actions .logout-form,
+  .js .app-nav-actions .logout-form .button {
     width: 100%;
   }
 
@@ -1433,4 +1442,36 @@ textarea:focus-visible {
   .movement-type-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Authentication */
+.login-page {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 0 2rem;
+}
+
+.login-card {
+  width: min(100%, 28rem);
+}
+
+.login-card h1 {
+  margin-top: 0;
+}
+
+.login-card .form-actions {
+  background: transparent;
+  border-top: 0;
+  border-radius: 0;
+  margin: 1rem 0 0;
+  padding: 0;
+  position: static;
+}
+
+.login-card .form-actions .button {
+  width: 100%;
+}
+
+.login-help {
+  margin-top: 1rem;
 }

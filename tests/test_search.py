@@ -56,7 +56,7 @@ class SearchViewTests(TestCase):
         response = self.client.get(reverse("search"), {"q": "Cimento"})
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse("admin:login"), response["Location"])
+        self.assertIn(reverse("login"), response["Location"])
 
     def test_search_is_get_only(self):
         response = self.client.post(reverse("search"), {"q": "Cimento"})
