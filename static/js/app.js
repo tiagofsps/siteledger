@@ -5,9 +5,7 @@
   var toggle = document.getElementById('nav-toggle');
   var closeButton = document.getElementById('nav-close');
   var overlay = document.getElementById('nav-overlay');
-  var searchToggle = document.getElementById('search-toggle');
   var searchPanel = document.getElementById('app-search-panel');
-  var searchInput = document.getElementById('global-search');
   var searchResults = document.getElementById('global-search-results');
 
   if (!nav || !toggle || !overlay) {
@@ -35,42 +33,11 @@
     );
   }
 
-  function openSearch() {
-    if (!searchPanel || !searchToggle) {
-      return;
-    }
-
-    closeNav(false);
-    searchPanel.classList.add('is-open');
-    searchToggle.setAttribute('aria-expanded', 'true');
-    searchToggle.setAttribute('aria-label', 'Fechar pesquisa');
-    if (searchInput) {
-      searchInput.focus();
-    }
-  }
-
-  function closeSearch(returnFocus) {
-    if (!searchPanel || !searchToggle) {
-      return;
-    }
-
-    searchPanel.classList.remove('is-open');
-    searchToggle.setAttribute('aria-expanded', 'false');
-    searchToggle.setAttribute('aria-label', 'Abrir pesquisa');
-    if (searchResults) {
-      searchResults.innerHTML = '';
-    }
-    if (returnFocus !== false) {
-      searchToggle.focus();
-    }
-  }
-
   function openNav() {
     if (isOpen) {
       return;
     }
 
-    closeSearch(false);
     isOpen = true;
     lastFocused = document.activeElement;
     nav.classList.add('is-open');
@@ -128,38 +95,7 @@
     }
   });
 
-  if (searchToggle) {
-    searchToggle.addEventListener('click', function () {
-      if (searchPanel && searchPanel.classList.contains('is-open')) {
-        closeSearch();
-      } else {
-        openSearch();
-      }
-    });
-  }
-
-  document.addEventListener('keydown', function (event) {
-    if (
-      event.key === 'Escape' &&
-      searchPanel &&
-      searchPanel.classList.contains('is-open')
-    ) {
-      event.preventDefault();
-      closeSearch();
-    }
-  });
-
   document.addEventListener('click', function (event) {
-    if (
-      searchPanel &&
-      searchPanel.classList.contains('is-open') &&
-      !searchPanel.contains(event.target) &&
-      event.target !== searchToggle
-    ) {
-      closeSearch(false);
-      return;
-    }
-
     if (searchResults && searchPanel && !searchPanel.contains(event.target)) {
       searchResults.innerHTML = '';
     }
