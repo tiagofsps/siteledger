@@ -11,6 +11,7 @@ This document takes precedence over generic tooling preferences. Every agent mus
 - **Company:** Partilha Louca, a small civil construction company that also operates as a real-estate agency.
 - **Initial objective:** operational management of construction projects, material purchases, item quantities and material movements between locations.
 - **Current scope:** the application manages projects, suppliers, purchases, a shared item catalogue, logical locations and an append-only history of stock movements. Quantities are tracked by item and location. Recorded balances are derived from active movements and do not represent confirmed physical stock.
+- **Users:** a small, fixed set of authorised internal users. There is no public registration or self-service account creation.
 - **Interface language:** European Portuguese.
 - **Documentation and code language:** English.
 - **Time zone:** `Europe/Lisbon`.
@@ -73,6 +74,7 @@ Do not implement, plan as mandatory, or infer:
 - Material requisitions.
 - Formal approvals.
 - Bureaucratic workflows.
+- Public user registration or self-service account creation.
 - Serial-number, lot or batch tracking after transfers.
 
 Do not create fields, calculations, alerts or reports that suggest the system knows the real physical stock of a project. The append-only movement history and the recorded balances derived from it are explicitly permitted and required.
@@ -88,6 +90,18 @@ Do not create fields, calculations, alerts or reports that suggest the system kn
 - SQLite only for local development.
 - HTML, CSS and JavaScript only when necessary.
 - Git for version control.
+
+### Frontend architecture
+
+- Server-rendered HTML through Django Templates.
+- HTMX is vendored locally at `static/vendor/htmx.min.js`.
+- Vanilla JavaScript lives in `static/js/app.js`; there is no frontend build step or framework.
+- Styling lives in `static/css/app.css` and uses CSS custom properties and mobile-first media queries.
+- Core workflows must remain usable without JavaScript.
+- JavaScript is presentation-only. It must not contain business validation, authorisation or data rules.
+- Do not add React, Vue, Svelte, Next.js, Tailwind, Bootstrap, a CDN-hosted frontend dependency or a frontend build pipeline.
+- HTMX and JavaScript enhancements must degrade to normal forms, links and full-page requests.
+- Do not add PWA, offline or background-sync behaviour without explicit authorisation.
 
 ### Prohibited
 
@@ -122,21 +136,38 @@ psycopg[binary]==3.3.6
 - HTMX is not a Python dependency. It is vendored at `static/vendor/htmx.min.js`, version 2.0.11, 0BSD licence, from the official `htmx.org` npm package.
 - Recorded integrity: tarball `htmx.org-2.0.11.tgz` with SHA-512 `sha512-Thx/WtpeOQqSrqBCw/A1cwGJGg4UrVa3+sW0GmrM3p4gJgO89ecH4qtbnyzDDWFvBTqjnIMCgELTNt636dtamA==` and final file with SHA-256 `d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717`.
 - Any HTMX update requires verification of the official distribution, licence and integrity, and must be recorded in the documentation.
+- No frontend dependency manager, bundler or build pipeline is part of the project. `static/js/app.js` is plain JavaScript.
 
 ## 5. Directory structure
 
 ```text
 partilha-louca-operations/
 ├── config/
+│   ├── settings.py
+│   ├── urls.py
+│   └── views.py
 ├── projects/
 ├── purchases/
 ├── inventory/
+│   └── management/
+│       └── commands/
+│           └── seed_demo.py
 ├── templates/
 │   ├── base.html
-│   └── partials/
+│   ├── partials/
+│   │   ├── form_progress.html
+│   │   └── theme_toggle.html
+│   ├── registration/
+│   │   └── login.html
+│   └── search/
+│       ├── search_results.html
+│       └── partials/
+│           └── results.html
 ├── static/
 │   ├── css/
+│   │   └── app.css
 │   ├── js/
+│   │   └── app.js
 │   └── vendor/
 ├── media/
 ├── tests/
@@ -150,15 +181,28 @@ partilha-louca-operations/
 └── manage.py
 ```
 
+- `config/` contains project settings, root URLs, the cross-cutting search view and authentication URL wiring.
 - `templates/` contains shared templates.
-- `templates/partials/` contains reusable fragments, including HTMX fragments.
-- `static/` contains CSS, JavaScript and vendored dependencies.
+- `templates/partials/` contains reusable UI fragments, including form progress and the theme toggle.
+- `templates/registration/` contains authentication templates.
+- `templates/search/` contains the full search page and its HTMX partial.
+- `static/` contains CSS, presentation-only JavaScript and vendored dependencies.
 - `media/` contains local development uploads. It is never served publicly.
-- `tests/` contains cross-cutting foundation and integration tests.
-- `docs/` contains project specifications and decision records.
+- `tests/` contains cross-cutting foundation, authentication, search and integration tests.
+- `docs/` contains project specifications, decision records and commit conventions.
+- `inventory/management/commands/` contains development and demo management commands.
 - Each app may have its own `templates/<app>/` and `static/<app>/` directories when appropriate.
 
 ## 6. Django application responsibilities
+
+### `config`
+
+- Project settings, root URL configuration and cross-cutting views.
+- Owns the global search view in `config/views.py`.
+- Global search is read-only, GET-only, authenticated through `LoginRequiredMiddleware`, filtered by the user's `view_*` permissions and returns HTML partials or a full results page.
+- Search results are limited per domain and must never expose records the user cannot view.
+- Owns the application login and logout URL wiring using Django's built-in authentication views.
+- Does not own domain business rules or models.
 
 ### `projects`
 
@@ -186,6 +230,8 @@ partilha-louca-operations/
 - `PurchaseItem` with purchase, optional catalogue item, snapshot description, snapshot unit, positive quantity and optional non-negative unit price.
 - A purchase line may remain partially or entirely unallocated.
 - Allocation is represented by `INITIAL_ENTRY` stock movements linked to the purchase line.
+- A saved purchase with catalogue lines can continue directly into an allocation overview; allocation remains optional.
+- Guided purchase forms are a presentation layer over the same server-side form and formset.
 - The active initial-entry quantity linked to a purchase line may never exceed the line quantity.
 - Purchase item quantities cannot be reduced below their active allocated quantity.
 - Purchase lines with movements cannot be deleted.
@@ -201,11 +247,23 @@ partilha-louca-operations/
 - `Location` with type (`WAREHOUSE` or `PROJECT`), optional one-to-one project, and `is_active`.
 - `StockMovement` with item, optional source location, optional destination location, optional purchase line, positive quantity, movement type, movement date, notes, creation user, cancellation fields and timestamps.
 - Initial entries, transfers, adjustments, returns to warehouse and purchase-line allocations.
+- Movement creation starts with a movement-type chooser.
+- Guided movement forms are presentation-only; the server remains authoritative for validation and for opening the step that contains errors.
 - Transfer validation must not allow the source location's recorded balance to become negative.
 - Cancellation validation must not allow any affected location's recorded balance to become negative.
 - No physical stock counts, consumption calculations or automatic inventory reconciliation.
 
 Do not create functional models without an explicit request.
+
+### Management commands
+
+- `inventory/management/commands/seed_demo.py` is a development and demo utility.
+- It must be idempotent and must not duplicate records when run repeatedly.
+- It must use the domain services for every stock movement and must never insert `StockMovement` records directly.
+- It must preserve allocation limits, balance constraints and cancellation rules.
+- It must refuse to run with `DEBUG=False` unless `--force` is used.
+- It is not a production data-loading mechanism.
+- Changes to its dataset or behaviour must be reflected in the README.
 
 ## 7. Code conventions
 
@@ -225,11 +283,14 @@ Do not create functional models without an explicit request.
 - Use `ROUND_HALF_UP` for displayed monetary rounding.
 - Use database constraints for invariants where possible and form validation for user-facing errors.
 - All quantity-changing write paths must use the same domain service operations. Do not rely exclusively on form validation or model `save()` overrides.
+- Do not put business validation, authorisation or data rules in client-side JavaScript.
+- Prefer progressive enhancement. Core forms, links and read-only workflows must remain usable without JavaScript.
 - Do not edit completed movements. Correct mistakes through cancellation and replacement movements.
 
 ## 8. Templates and components
 
 - `templates/base.html` is the common interface base.
+- The base template must render the authenticated shell and a minimal anonymous shell separately. Anonymous pages must not show application navigation, search or operational actions.
 - App-specific templates belong in `<app>/templates/<app>/`.
 - Reusable fragments and HTMX partials belong in `templates/partials/` or `<app>/templates/<app>/partials/`.
 - Use `{% extends %}` and `{% block %}` for composition.
@@ -238,7 +299,13 @@ Do not create functional models without an explicit request.
 - Keep HTML semantic and accessible.
 - The interface is mobile-first, responsive, simple, modern, professional and fast.
 - The objective is to record purchases, allocations and movements with the minimum number of steps.
-- Do not develop a complete design without an explicit request.
+- Use shared partials for repeated UI behaviour, including form progress, the theme switch and search results.
+- Guided forms are presentation-only. The server must remain authoritative for validation and must communicate the step containing errors.
+- Guided forms must show all fields and remain submittable when JavaScript is unavailable.
+- Login pages must not expose registration links, application navigation or operational data.
+- Ensure keyboard operation, visible focus states and appropriate `aria-*` attributes for interactive components.
+- Keep touch targets usable on mobile.
+- Do not redesign established interface patterns without an explicit request.
 - Do not present recorded balances as confirmed physical stock.
 
 ## 9. HTMX
@@ -254,6 +321,10 @@ Do not create functional models without an explicit request.
 - Handle loading indicators and error states for asynchronous operations.
 - The vendored version is 2.0.11. Do not use a CDN in production.
 - Never use `hx-get` or `hx-post` for operations without server-side authentication and permission checks.
+- Read-only HTMX endpoints must use GET. State-changing HTMX endpoints must use POST and CSRF protection.
+- Do not use HTMX for an essential workflow without a normal form or full-page fallback.
+- The global search endpoint is GET-only, authenticated, permission-filtered and returns grouped HTML results.
+- Search results must never expose records the user cannot view.
 - The purchase item row endpoint is GET-only, authenticated, permission-checked and limited to 50 rows.
 - The row endpoint returns one form row and an out-of-band `TOTAL_FORMS` update.
 
@@ -303,10 +374,14 @@ Mandatory rules:
 - `LOGIN_REDIRECT_URL = "projects:list"`.
 - `LOGOUT_REDIRECT_URL = "login"`.
 - The application login page is `/login/`.
+- Use Django's built-in `LoginView` and `LogoutView`; never implement password verification or session authentication manually.
 - Logout is POST-only at `/logout/`.
+- Login and logout must use CSRF protection.
 - There is no public registration or self-service account creation.
 - Users are created and managed by an administrator in the Django Admin.
 - Password recovery is handled by an administrator.
+- Do not add self-service password reset without explicit approval and configured email delivery.
+- Login and logout behaviour must be covered by tests, including CSRF and safe `next` redirects.
 - The Django Admin login remains available at `/admin/login/`.
 
 ## 11. Database and files
@@ -334,19 +409,39 @@ Mandatory rules:
 - Purchase tests are in `purchases/tests/` and cover models, constraints, forms, formsets, services, views, permissions, CSRF, HTMX, allocation integration and the absence of admin registrations.
 - Inventory tests are in `inventory/tests/` and cover models, constraints, balances, initial entries, transfers, adjustments, cancellation, locations, permissions, CSRF and views.
 - Cross-app integration tests cover purchase allocation, movement history, project archiving and recorded balances.
+- Authentication tests in `tests/test_authentication.py` cover login, logout, CSRF, inactive users, safe redirects and protected-page redirects.
+- Search tests in `tests/test_search.py` cover permissions, grouped results, HTMX partials, empty queries and result limits.
+- Seed command tests in `inventory/tests/test_seed_demo.py` cover idempotency, allocation limits, balances, cancellation, user association and the `DEBUG=False` guard.
+- Foundation and base-template tests cover application registration, configuration, authenticated and anonymous shells, navigation, the theme switch, search markup and available static assets.
+- Guided-form tests cover server-side error routing and preserve the normal POST workflow.
 - Test authentication and authorisation on every sensitive operation.
 - Test that a user cannot access records from another user or projects where they lack permission.
+- Test that search results are filtered by permissions.
 - Test upload validation when uploads exist.
 - Test CSRF on state-changing requests.
+- For interface changes, manually verify mobile widths, keyboard operation, theme behaviour and the no-JavaScript fallback.
 - Do not mask errors or disable checks to obtain green tests.
 - Run `python manage.py check` before completing any task.
-- When present, also run migrations and deployment checks.
+- Run `python manage.py makemigrations --check --dry-run` when models or migrations change.
+- Run the full test suite before completing a task.
 - The absence of tests in a change must be justified.
+
+### Definition of done
+
+- `python manage.py check` passes.
+- `python manage.py test` passes.
+- Migrations are consistent when models change.
+- Documentation is updated when setup, behaviour or workflows change.
+- No secrets, database files, uploads, caches or virtual environments are committed.
+- Interface changes have been checked on mobile, with keyboard navigation and without JavaScript where applicable.
 
 ## 13. Git and changes
 
 - Do not commit, push or create pull requests without an explicit request.
 - Do not change remote repositories.
+- Do not rewrite history, force-push or delete branches without explicit authorisation.
+- Commit only after the relevant checks and tests pass.
+- Keep commits focused.
 - Do not publish code or credentials.
 - Inspect the existing state before changing files.
 - Do not delete files without authorisation.
@@ -367,10 +462,18 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 python manage.py migrate
+python manage.py createsuperuser
+python manage.py seed_demo
+python manage.py seed_demo --user admin
+python manage.py seed_demo --force
 python manage.py runserver
 python manage.py check
+python manage.py makemigrations --check --dry-run
 python manage.py test
 python manage.py test projects
 python manage.py test purchases
 python manage.py test inventory
+python manage.py test tests.test_authentication
+python manage.py test tests.test_search
+python manage.py test inventory.tests.test_seed_demo
 ```
