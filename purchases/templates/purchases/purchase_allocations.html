@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Alocar quantidades | Compras{% endblock %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Caminho">
+    <a href="{% url 'purchases:purchase_list' %}">Compras</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ purchase.get_absolute_url }}">Compra de {{ purchase.purchase_date|date:"d/m/Y" }}</a>
+    <span aria-hidden="true">/</span>
+    <span>Alocar quantidades</span>
+  </nav>
+
+  <div class="page-header">
+    <div>
+      <h1>Alocar quantidades</h1>
+      <p class="page-subtitle">A compra foi registada. Distribua as quantidades pelas localizações ou conclua e aloque mais tarde.</p>
+    </div>
+  </div>
+
+  <section class="detail-panel" aria-labelledby="purchase-summary">
+    <h2 id="purchase-summary" class="visually-hidden">Resumo da compra</h2>
+    <dl class="detail-list">
+      <div>
+        <dt>Fornecedor</dt>
+        <dd>{{ purchase.supplier.name }}</dd>
+      </div>
+      <div>
+        <dt>Data da compra</dt>
+        <dd>{{ purchase.purchase_date|date:"d/m/Y" }}</dd>
+      </div>
+      <div>
+        <dt>Total</dt>
+        <dd>{{ purchase.total|floatformat:2 }} €</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="section-block" aria-labelledby="purchase-items">
+    <h2 id="purchase-items">Artigos</h2>
+
+    {% if allocation_forms %}
+      <div class="item-list">
+        {% for item, form in allocation_forms %}
+          <article class="item-card">
+            <div class="item-card-header">
+              <div>
+                <h3>{{ item.description }}</h3>
+                <p class="record-card-meta">
+                  {{ item.quantity|floatformat:3 }} {{ item.unit }}
+                  {% if item.item_id %}· {{ item.item.name }}{% endif %}
+                </p>
+              </div>
+              <div class="item-card-total">
+                <strong>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</strong>
+                <span class="text-muted">por alocar</span>
+              </div>
+            </div>
+
+            <dl class="obra-meta">
+              <div>
+                <dt>Alocada</dt>
+                <dd>{{ item.active_allocated|floatformat:3 }} {{ item.unit }}</dd>
+              </div>
+              <div>
+                <dt>Por alocar</dt>
+                <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
+              </div>
+            </dl>
+
+            {% if form %}
+              <form class="form-card" method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="item_pk" value="{{ item.pk }}">
+                {{ form.non_field_errors }}
+                <div class="field-grid">
+                  <div class="form-field{% if form.location.errors %} form-field--error{% endif %}">
+                    {{ form.location.label_tag }}
+                    {{ form.location }}
+                    {{ form.location.errors }}
+                  </div>
+                  <div class="form-field{% if form.quantity.errors %} form-field--error{% endif %}">
+                    {{ form.quantity.label_tag }}
+                    {{ form.quantity }}
+                    {{ form.quantity.errors }}
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="button" type="submit">Alocar</button>
+                  <a class="button button--secondary" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Ver histórico</a>
+                </div>
+              </form>
+            {% elif not item.item_id %}
+              <p class="notice">
+                Associe um artigo do catálogo a esta linha para poder alocar quantidades.
+                <a href="{% url 'purchases:purchase_update' purchase.pk %}">Editar compra</a>
+              </p>
+            {% elif not item.item.is_active %}
+              <p class="notice">
+                O artigo do catálogo está inativo.
+                <a href="{% url 'purchases:purchase_update' purchase.pk %}">Editar compra</a>
+              </p>
+            {% else %}
+              <p class="text-muted">Este artigo já está totalmente alocado.</p>
+              <div class="item-card-actions">
+                <a class="button button--secondary button--small" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Ver histórico</a>
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">Esta compra não tem artigos.</p>
+    {% endif %}
+  </section>
+
+  <div class="form-actions">
+    <a class="button" href="{{ purchase.get_absolute_url }}">Concluir</a>
+  </div>
+{% endblock %}

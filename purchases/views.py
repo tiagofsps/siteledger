@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -197,21 +199,36 @@ class PurchaseDetailView(PermissionRequiredMixin, DetailView):
             "created_by",
             "cancelled_by",
         ).order_by("-movement_date", "-created_at")
-        context["items"] = self.object.items.select_related("item").annotate(
-            active_allocated=Sum(
-                "movements__quantity",
-                filter=Q(
-                    movements__movement_type="initial_entry",
-                    movements__cancelled_at__isnull=True,
-                ),
+        items = list(
+            self.object.items.select_related("item")
+            .annotate(
+                active_allocated=Sum(
+                    "movements__quantity",
+                    filter=Q(
+                        movements__movement_type="initial_entry",
+                        movements__cancelled_at__isnull=True,
+                    ),
+                )
             )
-        ).prefetch_related(Prefetch("movements", queryset=movements))
+            .prefetch_related(Prefetch("movements", queryset=movements))
+        )
+        for item in items:
+            if item.active_allocated is None:
+                item.active_allocated = Decimal("0.000")
+
+        context["items"] = items
         context["can_change_purchase"] = self.request.user.has_perm(
             "purchases.change_purchase"
         )
         context["can_allocate"] = (
             context["can_change_purchase"]
             and self.request.user.has_perm("inventory.view_location")
+        )
+        context["has_pending_allocations"] = any(
+            item.item_id
+            and item.item.is_active
+            and item.remaining_quantity > 0
+            for item in items
         )
         return context
 
@@ -231,6 +248,15 @@ def purchase_create(request):
                 formset.instance = purchase
                 formset.save()
             messages.success(request, "A compra foi registada.")
+            can_allocate = (
+                request.user.has_perm("purchases.change_purchase")
+                and request.user.has_perm("inventory.view_location")
+            )
+            if can_allocate and purchase.items.filter(item__isnull=False).exists():
+                return redirect(
+                    "purchases:purchase_allocations",
+                    pk=purchase.pk,
+                )
             return redirect(purchase.get_absolute_url())
     else:
         form = PurchaseForm()
@@ -287,6 +313,93 @@ def purchase_update(request, pk):
                 "submit_label": "Guardar alterações",
             },
         )
+
+
+@permission_required(
+    ("purchases.change_purchase", "inventory.view_location"),
+    raise_exception=True,
+)
+@require_http_methods(["GET", "POST"])
+def purchase_allocations(request, pk):
+    purchase = get_object_or_404(
+        Purchase.objects.select_related("supplier"),
+        pk=pk,
+    )
+    items = list(
+        purchase.items.select_related("item")
+        .annotate(
+            active_allocated=Sum(
+                "movements__quantity",
+                filter=Q(
+                    movements__movement_type=StockMovement.Type.INITIAL_ENTRY,
+                    movements__cancelled_at__isnull=True,
+                ),
+            )
+        )
+        .order_by("pk")
+    )
+    for item in items:
+        if item.active_allocated is None:
+            item.active_allocated = Decimal("0.000")
+
+    submitted_item = None
+    submitted_form = None
+
+    if request.method == "POST":
+        try:
+            item_pk = int(request.POST.get("item_pk", ""))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest("Artigo inválido.")
+
+        submitted_item = get_object_or_404(
+            PurchaseItem.objects.select_related("purchase", "item"),
+            pk=item_pk,
+            purchase=purchase,
+        )
+        submitted_form = AllocationForm(
+            request.POST,
+            prefix=f"allocation-{submitted_item.pk}",
+            item=submitted_item,
+        )
+
+        if submitted_form.is_valid():
+            try:
+                allocate_purchase_item(
+                    purchase_item=submitted_item,
+                    location=submitted_form.cleaned_data["location"],
+                    quantity=submitted_form.cleaned_data["quantity"],
+                    movement_date=purchase.purchase_date,
+                    user=request.user,
+                )
+            except ValidationError as error:
+                submitted_form.add_error(None, error.messages)
+            else:
+                messages.success(request, "A alocação foi registada.")
+                return redirect(
+                    "purchases:purchase_allocations",
+                    pk=purchase.pk,
+                )
+
+    allocation_forms = []
+    for item in items:
+        form = None
+        if submitted_item is not None and item.pk == submitted_item.pk:
+            form = submitted_form
+        elif item.item_id and item.item.is_active and item.remaining_quantity > 0:
+            form = AllocationForm(
+                prefix=f"allocation-{item.pk}",
+                item=item,
+            )
+        allocation_forms.append((item, form))
+
+    return render(
+        request,
+        "purchases/purchase_allocations.html",
+        {
+            "purchase": purchase,
+            "allocation_forms": allocation_forms,
+        },
+    )
 
 
 @permission_required(

@@ -92,9 +92,37 @@ class PurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         purchase = Purchase.objects.get()
+        self.assertEqual(
+            response["Location"],
+            reverse("purchases:purchase_allocations", args=[purchase.pk]),
+        )
         purchase_item = purchase.items.get()
         self.assertEqual(purchase_item.description, self.item.name)
         self.assertEqual(purchase_item.unit, self.item.unit)
+
+    def test_create_without_catalogue_item_redirects_to_detail(self):
+        data = purchase_form_data(supplier=self.supplier, item=None)
+        data["items-0-description"] = "Material avulso"
+        data["items-0-unit"] = "un"
+        response = self.client.post(reverse("purchases:purchase_create"), data)
+        self.assertEqual(response.status_code, 302)
+        purchase = Purchase.objects.get()
+        self.assertEqual(response["Location"], purchase.get_absolute_url())
+
+    def test_create_without_allocation_permissions_redirects_to_detail(self):
+        self.client.force_login(
+            create_user(
+                "purchase-creator",
+                permissions=("purchases.add_purchase",),
+            )
+        )
+        response = self.client.post(
+            reverse("purchases:purchase_create"),
+            purchase_form_data(supplier=self.supplier, item=self.item),
+        )
+        self.assertEqual(response.status_code, 302)
+        purchase = Purchase.objects.get()
+        self.assertEqual(response["Location"], purchase.get_absolute_url())
 
     def test_purchase_requires_at_least_one_item(self):
         data = purchase_form_data(supplier=self.supplier, item=None)
@@ -273,6 +301,32 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["purchases"][0].item_count, 2)
 
+    def test_purchase_detail_shows_allocation_action_when_pending(self):
+        purchase = create_purchase(supplier=self.supplier)
+        purchase_item = create_purchase_item(
+            purchase=purchase,
+            item=self.item,
+            description=self.item.name,
+            unit=self.item.unit,
+            quantity=Decimal("5"),
+        )
+
+        response = self.client.get(purchase.get_absolute_url())
+        allocation_url = reverse(
+            "purchases:purchase_allocations",
+            args=[purchase.pk],
+        )
+        self.assertContains(response, allocation_url)
+
+        create_initial_entry(
+            item=self.item,
+            location=warehouse(),
+            quantity=Decimal("5"),
+            purchase_item=purchase_item,
+        )
+        response = self.client.get(purchase.get_absolute_url())
+        self.assertNotContains(response, allocation_url)
+
     def test_permissions_are_required(self):
         self.client.force_login(create_user("viewer"))
         response = self.client.get(reverse("purchases:purchase_list"))
@@ -290,6 +344,150 @@ class PurchaseViewTests(TestCase):
         response = client.post(
             reverse("purchases:purchase_create"),
             purchase_form_data(supplier=self.supplier, item=self.item),
+        )
+        self.assertEqual(response.status_code, 403)
+
+
+class PurchaseAllocationViewTests(TestCase):
+    def setUp(self):
+        self.user = create_user("allocation-manager", permissions=PURCHASE_PERMISSIONS)
+        self.client.force_login(self.user)
+        self.supplier = create_supplier()
+        self.item = create_item()
+        self.purchase = create_purchase(supplier=self.supplier)
+        self.purchase_item = create_purchase_item(
+            purchase=self.purchase,
+            item=self.item,
+            description=self.item.name,
+            unit=self.item.unit,
+            quantity=Decimal("5"),
+        )
+
+    def allocation_data(self, item, *, location=None, quantity="2.000"):
+        return {
+            "item_pk": item.pk,
+            f"allocation-{item.pk}-location": (location or warehouse()).pk,
+            f"allocation-{item.pk}-quantity": quantity,
+        }
+
+    def test_get_shows_pending_line_and_form(self):
+        response = self.client.get(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.item.name)
+        self.assertContains(response, f"name=\"allocation-{self.purchase_item.pk}-quantity\"")
+        self.assertContains(response, "por alocar")
+
+    def test_post_allocates_and_redirects(self):
+        response = self.client.post(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            self.allocation_data(self.purchase_item),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+        )
+        movement = StockMovement.objects.get(purchase_item=self.purchase_item)
+        self.assertEqual(movement.quantity, Decimal("2.000"))
+        self.assertEqual(
+            self.purchase_item.get_active_allocated_quantity(),
+            Decimal("2.000"),
+        )
+
+    def test_post_rejects_quantity_above_remaining(self):
+        response = self.client.post(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            self.allocation_data(self.purchase_item, quantity="6.000"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "excede o que falta alocar")
+        self.assertFalse(
+            StockMovement.objects.filter(purchase_item=self.purchase_item).exists()
+        )
+
+    def test_fully_allocated_line_has_no_form(self):
+        create_initial_entry(
+            item=self.item,
+            location=warehouse(),
+            quantity=Decimal("5"),
+            purchase_item=self.purchase_item,
+        )
+        response = self.client.get(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "totalmente alocado")
+        self.assertNotContains(
+            response,
+            f"name=\"allocation-{self.purchase_item.pk}-quantity\"",
+        )
+
+    def test_free_text_line_shows_catalogue_guidance(self):
+        create_purchase_item(
+            purchase=self.purchase,
+            item=None,
+            description="Material avulso",
+            unit="un",
+            quantity=Decimal("2"),
+        )
+        response = self.client.get(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Associe um artigo do catálogo")
+
+    def test_inactive_catalogue_item_has_no_form(self):
+        self.item.is_active = False
+        self.item.save(update_fields=["is_active"])
+        response = self.client.get(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "está inativo")
+        self.assertNotContains(
+            response,
+            f"name=\"allocation-{self.purchase_item.pk}-quantity\"",
+        )
+
+    def test_item_from_another_purchase_is_rejected(self):
+        other_purchase = create_purchase(
+            supplier=create_supplier(name="Outro fornecedor")
+        )
+        other_item = create_purchase_item(
+            purchase=other_purchase,
+            item=self.item,
+            description=self.item.name,
+            unit=self.item.unit,
+            quantity=Decimal("1"),
+        )
+        response = self.client.post(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            self.allocation_data(other_item, quantity="1.000"),
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_missing_item_pk_is_rejected(self):
+        response = self.client.post(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            {},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_permissions_are_required(self):
+        self.client.force_login(create_user("allocation-viewer"))
+        response = self.client.get(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_csrf_is_required(self):
+        client = self.client_class(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        response = client.post(
+            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            self.allocation_data(self.purchase_item),
         )
         self.assertEqual(response.status_code, 403)
 
