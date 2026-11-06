@@ -96,13 +96,33 @@ Only paid resources require a payment method; the first deploy itself is free.
 
 ## Create the first user
 
-Open the Render Shell for the web service and run:
+Free instances do not provide a Render Shell, and the application has no
+self-registration. Create the first user from a local checkout, connecting to
+the database's **external** connection string.
+
+1. In Render, open the database, go to **Connect** and copy the **External
+   Database URL**.
+2. From the project root, with the virtual environment active, read the URL
+   without echoing it and without leaving it in the shell history:
 
 ```bash
+cd ~/Projects/partilha-louca-operations
+source .venv/bin/activate
+read -rs -p "External Database URL: " DATABASE_URL; echo
+export DATABASE_URL
 python manage.py createsuperuser
+unset DATABASE_URL
 ```
 
-Create the remaining users through Django Admin at `/admin/auth/user/`.
+`DATABASE_URL` takes precedence over the local SQLite settings, so the command
+writes the user to the Render database, not to `db.sqlite3`. The external URL
+already carries the SSL parameters it needs.
+
+Create the remaining users through Django Admin at `/admin/auth/user/`, using
+the superuser you just created.
+
+A Render Shell becomes available after the web service is moved to a paid
+instance.
 
 Do not run `seed_demo` in production.
 
@@ -186,7 +206,7 @@ When uploads are introduced, use private object storage such as S3 or Cloudflare
 
 - Apply the Blueprint and confirm the first deploy.
 - Confirm the CI run that precedes it is green.
-- Create the superuser through the Render Shell.
+- Create the superuser from a local checkout against the database's external URL; the Render Shell requires a paid instance.
 - Create the remaining users through Django Admin.
 - Take a database dump, or upgrade the database plan before the 30-day free expiry.
 - Configure a custom domain and its additional host/CSRF environment variables if needed.
