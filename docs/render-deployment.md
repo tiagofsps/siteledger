@@ -23,6 +23,7 @@ SQLite is not used in production: Render's filesystem is ephemeral, and the appl
 | Sleeps after 15 minutes without traffic | the first request takes roughly 30 to 60 seconds |
 | 0.1 CPU / 512 MB | adequate for a handful of users, with slow cold starts |
 | No `preDeployCommand` | migrations run in the build command |
+| No `maxShutdownDelaySeconds` | Render uses its default shutdown delay |
 | No zero-downtime deploys | a brief error while the instance restarts |
 | Free PostgreSQL expires after 30 days | the database and all data are deleted |
 | No PostgreSQL backups | recovery is only possible from a manual dump |
