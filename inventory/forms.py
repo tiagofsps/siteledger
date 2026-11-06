@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from .models import Item, Location, StockMovement
 from .units import validate_quantity
+from .widgets import UnitSelect
 
 POSITIVE_QUANTITY = Decimal("0.001")
 
@@ -80,6 +81,7 @@ class InitialEntryForm(MovementFormMixin, forms.Form):
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.none(),
+        widget=UnitSelect,
     )
     to_location = forms.ModelChoiceField(
         label="Localização de destino",
@@ -111,6 +113,7 @@ class TransferForm(MovementFormMixin, forms.Form):
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.none(),
+        widget=UnitSelect,
     )
     from_location = forms.ModelChoiceField(
         label="Localização de origem",
@@ -158,6 +161,7 @@ class ReturnToWarehouseForm(MovementFormMixin, forms.Form):
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.none(),
+        widget=UnitSelect,
     )
     from_location = forms.ModelChoiceField(
         label="Localização de origem",
@@ -190,6 +194,7 @@ class AdjustmentInForm(MovementFormMixin, forms.Form):
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.none(),
+        widget=UnitSelect,
     )
     to_location = forms.ModelChoiceField(
         label="Localização",
@@ -220,6 +225,7 @@ class AdjustmentOutForm(MovementFormMixin, forms.Form):
     item = forms.ModelChoiceField(
         label="Artigo",
         queryset=Item.objects.none(),
+        widget=UnitSelect,
     )
     from_location = forms.ModelChoiceField(
         label="Localização",

@@ -448,3 +448,112 @@
 
   refresh();
 })();
+(function () {
+  'use strict';
+
+  var DISCRETE_UNITS = ['un', 'cx', 'sc', 'pl', 'rl', 'pct', 'md'];
+
+  function quantityInputFor(select) {
+    var row = select.closest('[data-purchase-line]');
+    if (row) {
+      return row.querySelector('input[name$="-quantity"]');
+    }
+
+    var form = select.closest('form');
+    return form ? form.querySelector('input[name="quantity"]') : null;
+  }
+
+  function syncQuantityStep(select) {
+    var input = quantityInputFor(select);
+    if (!input) {
+      return;
+    }
+
+    var option = select.options[select.selectedIndex];
+    var unit = option ? option.getAttribute('data-unit') : null;
+    var discrete = Boolean(unit) && DISCRETE_UNITS.indexOf(unit) !== -1;
+
+    input.setAttribute('step', discrete ? '1' : '0.001');
+    input.setAttribute('min', discrete ? '1' : '0.001');
+  }
+
+  function syncAllQuantitySteps() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll('select.item-select'),
+      syncQuantityStep
+    );
+  }
+
+  function applyQuickItem(marker) {
+    var prefix = marker.getAttribute('data-prefix');
+    var itemId = marker.getAttribute('data-item-id');
+    var label = marker.getAttribute('data-item-label');
+
+    if (!prefix || !itemId) {
+      marker.remove();
+      return;
+    }
+
+    var select = document.getElementById('id_' + prefix + '-item');
+    if (select) {
+      var option = document.createElement('option');
+      option.value = itemId;
+      option.textContent = label;
+      option.setAttribute('data-unit', marker.getAttribute('data-item-unit') || '');
+      select.appendChild(option);
+      select.value = itemId;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    var status = document.getElementById(prefix + '-quick-status');
+    if (status) {
+      status.textContent = '“' + label + '” foi criado e selecionado nesta linha.';
+    }
+
+    marker.remove();
+  }
+
+  function handleQuickItems() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll('[data-quick-item-created]'),
+      applyQuickItem
+    );
+  }
+
+  document.addEventListener('change', function (event) {
+    if (event.target.matches && event.target.matches('select.item-select')) {
+      syncQuantityStep(event.target);
+    }
+  });
+
+  document.addEventListener('htmx:afterSwap', function () {
+    handleQuickItems();
+    syncAllQuantitySteps();
+  });
+
+  document.addEventListener('click', function (event) {
+    var cancel = event.target.closest
+      ? event.target.closest('[data-quick-cancel]')
+      : null;
+
+    if (!cancel) {
+      return;
+    }
+
+    var form = cancel.closest('.quick-item-form');
+    if (!form) {
+      return;
+    }
+
+    var row = form.closest('[data-purchase-line]');
+    var status = row ? row.querySelector('[id$="-quick-status"]') : null;
+    if (status) {
+      status.textContent = '';
+    }
+
+    form.remove();
+  });
+
+  handleQuickItems();
+  syncAllQuantitySteps();
+})();

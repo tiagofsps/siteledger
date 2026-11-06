@@ -17,6 +17,8 @@
   --color-accent-soft-text: #991b1b;
 
   --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-active: #991b1b;
   --color-danger-soft: #fef2f2;
   --color-danger-text: #991b1b;
 
@@ -68,6 +70,8 @@
     --color-accent-soft-text: #fca5a5;
 
     --color-danger: #f87171;
+    --color-danger-hover: #fca5a5;
+    --color-danger-active: #fecaca;
     --color-danger-soft: #371717;
     --color-danger-text: #fca5a5;
 
@@ -100,6 +104,8 @@
   --color-accent-soft-text: #fca5a5;
 
   --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+  --color-danger-active: #fecaca;
   --color-danger-soft: #371717;
   --color-danger-text: #fca5a5;
 
@@ -131,6 +137,8 @@
   --color-accent-soft-text: #991b1b;
 
   --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-active: #991b1b;
   --color-danger-soft: #fef2f2;
   --color-danger-text: #991b1b;
 }
@@ -647,8 +655,27 @@ textarea:focus-visible {
 }
 
 .button--danger:hover {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
+  color: #ffffff;
+}
+
+.button--danger:active {
+  background: var(--color-danger-active);
+  border-color: var(--color-danger-active);
+}
+
+.data-table a.button,
+.data-table a.button:hover,
+.data-table a.button:visited {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.data-table a.button--secondary,
+.data-table a.button--secondary:hover,
+.data-table a.button--secondary:visited {
+  color: var(--color-text);
 }
 
 .button--small {
@@ -1195,19 +1222,22 @@ textarea:focus-visible {
   padding: 0.75rem;
 }
 
+.quick-item-slot:empty {
+  display: none;
+}
+
 .quick-item-fields {
   display: grid;
   gap: 0 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.quick-item-form {
+  width: 100%;
 }
 
 .quick-item-created {
   color: var(--color-completed-text);
-}
-
-@media (min-width: 48rem) {
-  .quick-item-fields {
-    grid-template-columns: minmax(10rem, 2fr) minmax(8rem, 1fr) minmax(6rem, 1fr);
-  }
 }
 
 .inline-actions {
