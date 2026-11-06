@@ -5,7 +5,7 @@ from django.db.models import Sum
 ZERO_TOTAL = Decimal("0.00")
 
 
-def active_allocated_quantity(purchase_item, *, exclude_movement=None):
+def active_received_quantity(purchase_item, *, exclude_movement=None):
     movements = purchase_item.movements.filter(
         movement_type="initial_entry",
         cancelled_at__isnull=True,

@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from inventory.services import (
-    allocate_purchase_item,
+    receive_purchase_item,
     cancel_stock_movement,
     create_transfer,
     location_balance,
@@ -16,7 +16,7 @@ from purchases.models import Purchase
 from purchases.tests.base import create_purchase, create_purchase_item, create_supplier
 
 
-class PurchaseAllocationIntegrationTests(TestCase):
+class PurchaseReceiptIntegrationTests(TestCase):
     def setUp(self):
         self.user = create_user(
             "integration-manager",
@@ -45,8 +45,8 @@ class PurchaseAllocationIntegrationTests(TestCase):
             quantity=Decimal("5"),
         )
 
-    def test_allocation_updates_project_balances_and_history(self):
-        allocate_purchase_item(
+    def test_receipt_updates_project_balances_and_history(self):
+        receive_purchase_item(
             purchase_item=self.purchase_item,
             location=self.location,
             quantity=Decimal("2"),
@@ -63,8 +63,8 @@ class PurchaseAllocationIntegrationTests(TestCase):
         )
         self.assertContains(response, self.item.name)
 
-    def test_cancellation_frees_allocation_and_removes_balance(self):
-        movement = allocate_purchase_item(
+    def test_cancellation_frees_receipt_and_removes_balance(self):
+        movement = receive_purchase_item(
             purchase_item=self.purchase_item,
             location=self.location,
             quantity=Decimal("2"),
@@ -78,7 +78,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
         )
 
         self.assertEqual(
-            self.purchase_item.get_active_allocated_quantity(),
+            self.purchase_item.get_active_received_quantity(),
             Decimal("0"),
         )
         self.assertEqual(
@@ -89,7 +89,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
         response = self.client.get(self.project.get_absolute_url())
         self.assertContains(response, "Cancelado")
 
-    def test_purchase_registration_flows_into_allocation(self):
+    def test_purchase_registration_flows_into_receipt(self):
         response = self.client.post(
             reverse("purchases:purchase_create"),
             {
@@ -101,29 +101,26 @@ class PurchaseAllocationIntegrationTests(TestCase):
                 "items-MIN_NUM_FORMS": "0",
                 "items-MAX_NUM_FORMS": "50",
                 "items-0-item": self.item.pk,
-                "items-0-description": "",
-                "items-0-unit": "",
                 "items-0-quantity": "2.000",
                 "items-0-unit_price": "10.00",
             },
         )
         self.assertEqual(response.status_code, 302)
         purchase = Purchase.objects.latest("pk")
-        self.assertEqual(
-            response["Location"],
-            reverse("purchases:purchase_allocations", args=[purchase.pk]),
-        )
+        self.assertEqual(response["Location"], purchase.get_absolute_url())
 
         purchase_item = purchase.items.get()
         response = self.client.post(
-            reverse("purchases:purchase_allocations", args=[purchase.pk]),
+            reverse("purchases:purchase_receive", args=[purchase.pk]),
             {
                 "item_pk": purchase_item.pk,
-                f"allocation-{purchase_item.pk}-location": self.location.pk,
-                f"allocation-{purchase_item.pk}-quantity": "2.000",
+                "location": self.location.pk,
+                "quantity": "2.000",
+                "movement_date": "2026-01-10",
             },
         )
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], purchase.get_absolute_url())
         self.assertEqual(
             location_balance(self.item, self.location),
             Decimal("2"),
@@ -145,7 +142,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
         response = self.client.get(project.get_absolute_url())
         self.assertNotContains(response, "Item não relacionado")
 
-    def test_archived_project_rejects_allocation_but_allows_return(self):
+    def test_archived_project_rejects_receipt_but_allows_return(self):
         create_initial_entry(
             item=self.item,
             location=self.location,
@@ -154,11 +151,13 @@ class PurchaseAllocationIntegrationTests(TestCase):
         self.project.archive()
 
         response = self.client.post(
-            reverse(
-                "purchases:item_allocations",
-                args=[self.purchase.pk, self.purchase_item.pk],
-            ),
-            {"location": self.location.pk, "quantity": "1.000"},
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            {
+                "item_pk": self.purchase_item.pk,
+                "location": self.location.pk,
+                "quantity": "1.000",
+                "movement_date": "2026-01-11",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "obra arquivada")

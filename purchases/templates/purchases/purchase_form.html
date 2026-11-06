@@ -27,11 +27,7 @@
     {% csrf_token %}
     {{ form.non_field_errors }}
 
-    {% if purchase %}
-      {% include "partials/form_progress.html" with step1="Dados" step2="Linhas" current_step=wizard_initial_step|default:1 %}
-    {% else %}
-      {% include "partials/form_progress.html" with step1="Dados" step2="Linhas" step3="Receção" current_step=wizard_initial_step|default:1 %}
-    {% endif %}
+    {% include "partials/form_progress.html" with step1="Dados" step2="Linhas" current_step=wizard_initial_step|default:1 %}
 
     <section class="wizard-step" data-step="1">
       <div class="field-grid">

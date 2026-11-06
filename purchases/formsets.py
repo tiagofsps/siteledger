@@ -31,13 +31,13 @@ class BasePurchaseItemFormSet(BaseInlineFormSet):
             quantity = cleaned_data.get("quantity")
             instance = form.instance
             if quantity is not None and instance.pk:
-                allocated = instance.get_active_allocated_quantity()
-                if quantity < allocated:
+                received = instance.get_active_received_quantity()
+                if quantity < received:
                     form.add_error(
                         "quantity",
                         (
                             "A quantidade não pode ser inferior à quantidade "
-                            f"já recebida ({allocated})."
+                            f"já recebida ({received})."
                         ),
                     )
 

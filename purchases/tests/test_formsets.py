@@ -69,7 +69,7 @@ class PurchaseItemFormSetTests(TestCase):
         self.assertFalse(formset.is_valid())
         self.assertIn("DELETE", formset.forms[0].errors)
 
-    def test_quantity_cannot_drop_below_active_allocation(self):
+    def test_quantity_cannot_drop_below_active_receipt(self):
         item = create_item()
         purchase = create_purchase()
         purchase_item = create_purchase_item(

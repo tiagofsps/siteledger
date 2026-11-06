@@ -5,7 +5,7 @@ from django.test import TestCase
 from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
 from projects.tests.base import create_project
 
-from purchases.forms import AllocationForm, PurchaseItemForm, SupplierForm
+from purchases.forms import ReceiptForm, PurchaseItemForm, SupplierForm
 
 from .base import create_purchase_item, create_supplier
 
@@ -86,7 +86,7 @@ class PurchaseItemFormTests(TestCase):
         self.assertIn("item", form.errors)
 
 
-class AllocationFormTests(TestCase):
+class ReceiptFormTests(TestCase):
     def setUp(self):
         self.item = create_item()
         self.purchase_item = create_purchase_item(
@@ -95,7 +95,7 @@ class AllocationFormTests(TestCase):
         )
 
     def test_quantity_cannot_exceed_remaining(self):
-        form = AllocationForm(
+        form = ReceiptForm(
             data={"location": warehouse().pk, "quantity": "6.000"},
             item=self.purchase_item,
         )
@@ -107,7 +107,7 @@ class AllocationFormTests(TestCase):
         location = project_location(project)
         project.archive()
 
-        form = AllocationForm(
+        form = ReceiptForm(
             data={"location": location.pk, "quantity": "1.000"},
             item=self.purchase_item,
         )

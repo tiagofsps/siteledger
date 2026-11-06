@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from inventory.models import Item, StockMovement
 from inventory.services import (
-    allocate_purchase_item,
+    receive_purchase_item,
     cancel_stock_movement,
     create_adjustment_in,
     create_adjustment_out,
@@ -271,7 +271,7 @@ class MovementServiceTests(TestCase):
         self.assertEqual(balances, [])
 
 
-class PurchaseAllocationServiceTests(TestCase):
+class PurchaseReceiptServiceTests(TestCase):
     def setUp(self):
         self.item = create_item()
         self.warehouse = warehouse()
@@ -289,8 +289,8 @@ class PurchaseAllocationServiceTests(TestCase):
             quantity=Decimal("5"),
         )
 
-    def test_allocate_purchase_item_creates_initial_entry(self):
-        movement = allocate_purchase_item(
+    def test_receive_purchase_item_creates_initial_entry(self):
+        movement = receive_purchase_item(
             purchase_item=self.purchase_item,
             location=self.warehouse,
             quantity=Decimal("3"),
@@ -304,12 +304,12 @@ class PurchaseAllocationServiceTests(TestCase):
             Decimal("3"),
         )
         self.assertEqual(
-            self.purchase_item.get_active_allocated_quantity(),
+            self.purchase_item.get_active_received_quantity(),
             Decimal("3"),
         )
 
-    def test_allocation_cannot_exceed_purchase_line_quantity(self):
-        allocate_purchase_item(
+    def test_receipt_cannot_exceed_purchase_line_quantity(self):
+        receive_purchase_item(
             purchase_item=self.purchase_item,
             location=self.warehouse,
             quantity=Decimal("3"),
@@ -317,7 +317,7 @@ class PurchaseAllocationServiceTests(TestCase):
             user=None,
         )
         with self.assertRaises(ValidationError):
-            allocate_purchase_item(
+            receive_purchase_item(
                 purchase_item=self.purchase_item,
                 location=self.warehouse,
                 quantity=Decimal("3"),
@@ -325,11 +325,11 @@ class PurchaseAllocationServiceTests(TestCase):
                 user=None,
             )
 
-    def test_allocation_requires_matching_unit(self):
+    def test_receipt_requires_matching_unit(self):
         self.purchase_item.unit = "kg"
         self.purchase_item.save(update_fields=["unit"])
         with self.assertRaises(ValidationError):
-            allocate_purchase_item(
+            receive_purchase_item(
                 purchase_item=self.purchase_item,
                 location=self.warehouse,
                 quantity=Decimal("1"),

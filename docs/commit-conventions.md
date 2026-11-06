@@ -48,7 +48,7 @@ fix(purchases): reject duplicate supplier names
 fix: prevent negative recorded balances
 refactor(inventory): extract stock movement services
 refactor: remove unused template context
-test(purchases): cover purchase line allocation limits
+test(purchases): cover purchase line receipt limits
 chore: pin Django dependency
 docs: add commit conventions
 ```
@@ -63,7 +63,7 @@ Use the footer for references and breaking changes:
 ```text
 Refs: #12
 
-BREAKING CHANGE: purchase line allocation now requires a catalogue item.
+BREAKING CHANGE: purchase line receipt now requires a catalogue item.
 ```
 
 A breaking change may also be marked with `!` after the type or scope:

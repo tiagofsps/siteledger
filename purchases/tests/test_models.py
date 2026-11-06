@@ -57,9 +57,9 @@ class PurchaseItemModelTests(TestCase):
         )
         self.assertEqual(item.subtotal, Decimal("2.51"))
 
-    def test_active_allocated_and_remaining_quantity(self):
+    def test_active_received_and_remaining_quantity(self):
         from inventory.tests.base import create_item, warehouse
-        from inventory.services import allocate_purchase_item
+        from inventory.services import receive_purchase_item
 
         item = create_item()
         purchase_item = create_purchase_item(
@@ -68,7 +68,7 @@ class PurchaseItemModelTests(TestCase):
             unit=item.unit,
             quantity=Decimal("5"),
         )
-        allocate_purchase_item(
+        receive_purchase_item(
             purchase_item=purchase_item,
             location=warehouse(),
             quantity=Decimal("2"),
@@ -76,7 +76,7 @@ class PurchaseItemModelTests(TestCase):
             user=None,
         )
         self.assertEqual(
-            purchase_item.get_active_allocated_quantity(),
+            purchase_item.get_active_received_quantity(),
             Decimal("2"),
         )
         self.assertEqual(purchase_item.remaining_quantity, Decimal("3"))

@@ -8,16 +8,20 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Prefetch, Q, Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import (
+    require_GET,
+    require_http_methods,
+    require_POST,
+)
 from django.views.generic import DetailView, ListView
 
-from inventory.models import StockMovement
-from inventory.services import allocate_purchase_item
+from inventory.models import Location, StockMovement
+from inventory.services import receive_purchase_item
 
 from .forms import (
-    AllocationForm,
     PurchaseFilterForm,
     PurchaseForm,
+    ReceiptForm,
     SupplierFilterForm,
     SupplierForm,
 )
@@ -196,6 +200,67 @@ class PurchaseListView(PermissionRequiredMixin, ListView):
         return context
 
 
+def _purchase_lines(purchase):
+    movements = StockMovement.objects.select_related(
+        "to_location",
+        "to_location__project",
+        "from_location",
+        "created_by",
+        "cancelled_by",
+    ).order_by("-movement_date", "-created_at")
+    lines = list(
+        purchase.items.select_related("item")
+        .annotate(
+            active_received=Sum(
+                "movements__quantity",
+                filter=Q(
+                    movements__movement_type=StockMovement.Type.INITIAL_ENTRY,
+                    movements__cancelled_at__isnull=True,
+                ),
+            )
+        )
+        .prefetch_related(Prefetch("movements", queryset=movements))
+        .order_by("pk")
+    )
+    for line in lines:
+        if line.active_received is None:
+            line.active_received = Decimal("0.000")
+    return lines
+
+
+def _purchase_detail_context(request, purchase, *, receipt_form=None, receipt_line=None):
+    lines = _purchase_lines(purchase)
+    can_change = request.user.has_perm("purchases.change_purchase")
+    can_receive = can_change and request.user.has_perm("inventory.view_location")
+    warehouse = (
+        Location.objects.filter(location_type=Location.Type.WAREHOUSE)
+        .order_by("pk")
+        .first()
+    )
+
+    for line in lines:
+        line.receipt_form = None
+        if not can_receive or line.remaining_quantity <= 0:
+            continue
+        if receipt_form is not None and line.pk == receipt_line.pk:
+            line.receipt_form = receipt_form
+        elif line.item.is_active:
+            line.receipt_form = ReceiptForm(
+                item=line,
+                initial={
+                    "location": warehouse.pk if warehouse else None,
+                    "quantity": line.remaining_quantity,
+                },
+            )
+
+    return {
+        "purchase": purchase,
+        "items": lines,
+        "can_change_purchase": can_change,
+        "can_receive": can_receive,
+    }
+
+
 class PurchaseDetailView(PermissionRequiredMixin, DetailView):
     permission_required = "purchases.view_purchase"
     model = Purchase
@@ -207,44 +272,7 @@ class PurchaseDetailView(PermissionRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        movements = StockMovement.objects.select_related(
-            "to_location",
-            "to_location__project",
-            "from_location",
-            "created_by",
-            "cancelled_by",
-        ).order_by("-movement_date", "-created_at")
-        items = list(
-            self.object.items.select_related("item")
-            .annotate(
-                active_allocated=Sum(
-                    "movements__quantity",
-                    filter=Q(
-                        movements__movement_type="initial_entry",
-                        movements__cancelled_at__isnull=True,
-                    ),
-                )
-            )
-            .prefetch_related(Prefetch("movements", queryset=movements))
-        )
-        for item in items:
-            if item.active_allocated is None:
-                item.active_allocated = Decimal("0.000")
-
-        context["items"] = items
-        context["can_change_purchase"] = self.request.user.has_perm(
-            "purchases.change_purchase"
-        )
-        context["can_allocate"] = (
-            context["can_change_purchase"]
-            and self.request.user.has_perm("inventory.view_location")
-        )
-        context["has_pending_allocations"] = any(
-            item.item_id
-            and item.item.is_active
-            and item.remaining_quantity > 0
-            for item in items
-        )
+        context.update(_purchase_detail_context(self.request, self.object))
         return context
 
 
@@ -267,15 +295,6 @@ def purchase_create(request):
                 formset.save()
                 recalculate_purchase_total(purchase)
             messages.success(request, "A compra foi registada.")
-            can_allocate = (
-                request.user.has_perm("purchases.change_purchase")
-                and request.user.has_perm("inventory.view_location")
-            )
-            if can_allocate and purchase.items.exists():
-                return redirect(
-                    "purchases:purchase_allocations",
-                    pk=purchase.pk,
-                )
             return redirect(purchase.get_absolute_url())
         wizard_initial_step = _purchase_wizard_step(form, formset)
     else:
@@ -344,139 +363,49 @@ def purchase_update(request, pk):
     ("purchases.change_purchase", "inventory.view_location"),
     raise_exception=True,
 )
-@require_http_methods(["GET", "POST"])
-def purchase_allocations(request, pk):
+@require_POST
+def purchase_receive(request, pk):
     purchase = get_object_or_404(
         Purchase.objects.select_related("supplier"),
         pk=pk,
     )
-    items = list(
-        purchase.items.select_related("item")
-        .annotate(
-            active_allocated=Sum(
-                "movements__quantity",
-                filter=Q(
-                    movements__movement_type=StockMovement.Type.INITIAL_ENTRY,
-                    movements__cancelled_at__isnull=True,
-                ),
-            )
-        )
-        .order_by("pk")
+    try:
+        item_pk = int(request.POST.get("item_pk", ""))
+    except (TypeError, ValueError):
+        return HttpResponseBadRequest("Linha inválida.")
+
+    line = get_object_or_404(
+        PurchaseItem.objects.select_related("purchase", "item"),
+        pk=item_pk,
+        purchase=purchase,
     )
-    for item in items:
-        if item.active_allocated is None:
-            item.active_allocated = Decimal("0.000")
+    form = ReceiptForm(request.POST, item=line)
 
-    submitted_item = None
-    submitted_form = None
-
-    if request.method == "POST":
+    if form.is_valid():
         try:
-            item_pk = int(request.POST.get("item_pk", ""))
-        except (TypeError, ValueError):
-            return HttpResponseBadRequest("Linha inválida.")
-
-        submitted_item = get_object_or_404(
-            PurchaseItem.objects.select_related("purchase", "item"),
-            pk=item_pk,
-            purchase=purchase,
-        )
-        submitted_form = AllocationForm(
-            request.POST,
-            prefix=f"allocation-{submitted_item.pk}",
-            item=submitted_item,
-        )
-
-        if submitted_form.is_valid():
-            try:
-                allocate_purchase_item(
-                    purchase_item=submitted_item,
-                    location=submitted_form.cleaned_data["location"],
-                    quantity=submitted_form.cleaned_data["quantity"],
-                    movement_date=purchase.purchase_date,
-                    user=request.user,
-                )
-            except ValidationError as error:
-                submitted_form.add_error(None, error.messages)
-            else:
-                messages.success(request, "A receção foi registada.")
-                return redirect(
-                    "purchases:purchase_allocations",
-                    pk=purchase.pk,
-                )
-
-    allocation_forms = []
-    for item in items:
-        form = None
-        if submitted_item is not None and item.pk == submitted_item.pk:
-            form = submitted_form
-        elif item.item_id and item.item.is_active and item.remaining_quantity > 0:
-            form = AllocationForm(
-                prefix=f"allocation-{item.pk}",
-                item=item,
+            receive_purchase_item(
+                purchase_item=line,
+                location=form.cleaned_data["location"],
+                quantity=form.cleaned_data["quantity"],
+                movement_date=form.cleaned_data["movement_date"],
+                user=request.user,
             )
-        allocation_forms.append((item, form))
+        except ValidationError as error:
+            form.add_error(None, error.messages)
+        else:
+            messages.success(request, "A receção foi registada.")
+            return redirect(purchase.get_absolute_url())
 
     return render(
         request,
-        "purchases/purchase_allocations.html",
-        {
-            "purchase": purchase,
-            "allocation_forms": allocation_forms,
-        },
-    )
-
-
-@permission_required(
-    ("purchases.change_purchase", "inventory.view_location"),
-    raise_exception=True,
-)
-@require_http_methods(["GET", "POST"])
-def item_allocations(request, purchase_pk, item_pk):
-    item_queryset = PurchaseItem.objects.select_related("purchase", "item")
-
-    with transaction.atomic():
-        item = get_object_or_404(item_queryset, pk=item_pk, purchase_id=purchase_pk)
-        if request.method == "POST":
-            form = AllocationForm(request.POST, item=item)
-            if form.is_valid():
-                try:
-                    allocate_purchase_item(
-                        purchase_item=item,
-                        location=form.cleaned_data["location"],
-                        quantity=form.cleaned_data["quantity"],
-                        movement_date=item.purchase.purchase_date,
-                        user=request.user,
-                    )
-                except ValidationError as error:
-                    form.add_error(None, error.messages)
-                else:
-                    messages.success(request, "A receção foi registada.")
-                    return redirect(
-                        "purchases:item_allocations",
-                        purchase_pk=item.purchase_id,
-                        item_pk=item.pk,
-                    )
-        else:
-            form = AllocationForm(item=item)
-
-        movements = item.movements.select_related(
-            "to_location",
-            "to_location__project",
-            "created_by",
-            "cancelled_by",
-        ).order_by("-created_at", "-pk")
-        return render(
+        "purchases/purchase_detail.html",
+        _purchase_detail_context(
             request,
-            "purchases/item_allocations.html",
-            {
-                "item": item,
-                "purchase": item.purchase,
-                "form": form,
-                "movements": movements,
-                "active_allocated": item.get_active_allocated_quantity(),
-            },
-        )
+            purchase,
+            receipt_form=form,
+            receipt_line=line,
+        ),
+    )
 
 
 @require_GET

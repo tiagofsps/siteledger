@@ -91,7 +91,7 @@ class SeedDemoCommandTests(TestCase):
         )
         self.assertEqual(len(notes), len(set(notes)))
 
-    def test_seed_demo_respects_allocation_limits_and_balances(self):
+    def test_seed_demo_respects_receipt_limits_and_balances(self):
         self.seed()
 
         for purchase_item in PurchaseItem.objects.filter(
@@ -99,7 +99,7 @@ class SeedDemoCommandTests(TestCase):
         ):
             with self.subTest(purchase_item=purchase_item.description):
                 self.assertLessEqual(
-                    purchase_item.get_active_allocated_quantity(),
+                    purchase_item.get_active_received_quantity(),
                     purchase_item.quantity,
                 )
 
@@ -128,7 +128,7 @@ class SeedDemoCommandTests(TestCase):
             Decimal("0.000"),
         )
 
-    def test_seed_demo_leaves_partial_allocations(self):
+    def test_seed_demo_leaves_partial_receipts(self):
         self.seed()
 
         cement = PurchaseItem.objects.get(
@@ -137,11 +137,11 @@ class SeedDemoCommandTests(TestCase):
         )
 
         self.assertGreater(
-            cement.get_active_allocated_quantity(),
+            cement.get_active_received_quantity(),
             Decimal("0"),
         )
         self.assertLess(
-            cement.get_active_allocated_quantity(),
+            cement.get_active_received_quantity(),
             cement.quantity,
         )
 
