@@ -362,3 +362,89 @@
     initWizard
   );
 })();
+(function () {
+  'use strict';
+
+  var currency = new Intl.NumberFormat('pt-PT', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  function parseNumber(value) {
+    var parsed = parseFloat(value);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  function roundCents(value) {
+    return Math.round(value * 100) / 100;
+  }
+
+  function formatMoney(value) {
+    return currency.format(value) + ' €';
+  }
+
+  function updateTotals(form) {
+    var total = 0;
+    var hasSubtotal = false;
+    var lines = form.querySelectorAll('[data-purchase-line]');
+
+    Array.prototype.forEach.call(lines, function (line) {
+      var quantityField = line.querySelector('[name$="-quantity"]');
+      var priceField = line.querySelector('[name$="-unit_price"]');
+      var deleteField = line.querySelector('[name$="-DELETE"]');
+      var output = line.querySelector('[data-line-subtotal]');
+      var quantity = quantityField ? parseNumber(quantityField.value) : null;
+      var price = priceField ? parseNumber(priceField.value) : null;
+      var removed = deleteField && deleteField.checked;
+      var subtotal = null;
+
+      if (!removed && quantity !== null && price !== null) {
+        subtotal = roundCents(quantity * price);
+        total += subtotal;
+        hasSubtotal = true;
+      }
+
+      if (output) {
+        output.textContent = subtotal === null ? '—' : formatMoney(subtotal);
+      }
+    });
+
+    var target = form.querySelector('[data-purchase-total]');
+    if (target) {
+      target.textContent = hasSubtotal
+        ? formatMoney(roundCents(total))
+        : '—';
+    }
+  }
+
+  function refresh() {
+    Array.prototype.forEach.call(
+      document.querySelectorAll('[data-purchase-totals]'),
+      updateTotals
+    );
+  }
+
+  function isInsidePurchaseForm(event) {
+    return (
+      event.target &&
+      event.target.closest &&
+      event.target.closest('[data-purchase-totals]')
+    );
+  }
+
+  document.addEventListener('input', function (event) {
+    if (isInsidePurchaseForm(event)) {
+      refresh();
+    }
+  });
+
+  document.addEventListener('change', function (event) {
+    if (isInsidePurchaseForm(event)) {
+      refresh();
+    }
+  });
+
+  document.addEventListener('htmx:afterSwap', refresh);
+
+  refresh();
+})();

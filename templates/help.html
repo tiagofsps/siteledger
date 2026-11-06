@@ -22,7 +22,7 @@
           <li><a href="#fornecedores">Fornecedores</a></li>
           <li><a href="#artigos">Artigos</a></li>
           <li><a href="#compras">Compras</a></li>
-          <li><a href="#alocacao">Alocação de compras</a></li>
+          <li><a href="#rececoes">Receções de compras</a></li>
           <li><a href="#movimentos">Movimentos</a></li>
           <li><a href="#saldos">Saldos registados</a></li>
           <li><a href="#correcoes">Correções e cancelamentos</a></li>
@@ -40,7 +40,7 @@
             <li><strong>Compras</strong> regista o que foi comprado a um fornecedor. Também não cria stock por si só.</li>
             <li><strong>Movimentos</strong> registam as entradas, transferências, devoluções e correções de quantidades entre localizações.</li>
           </ul>
-          <p>Uma compra só passa a ter quantidades registadas numa localização depois de ser alocada. A alocação cria uma entrada inicial associada à linha da compra.</p>
+          <p>Uma compra só passa a ter quantidades registadas numa localização depois de ser recebida. Cada receção cria uma entrada inicial associada à linha da compra.</p>
           <div class="help-callout">
           <strong>Importante:</strong> os saldos apresentados são saldos registados a partir do histórico de movimentos. Não são uma contagem de stock físico confirmada. O sistema não faz inventários, contagens ou cálculos automáticos de consumo.
         </div>
@@ -52,8 +52,8 @@
             <li>Crie os artigos necessários em <strong>Artigos</strong>.</li>
             <li>Crie os fornecedores em <strong>Compras → Fornecedores</strong>.</li>
             <li>Crie a obra em <strong>Obras</strong>.</li>
-            <li>Registe a compra em <strong>Compras</strong>, com o fornecedor, a data, o total e as linhas.</li>
-            <li>Aloque as quantidades compradas ao armazém ou a uma obra.</li>
+            <li>Registe a compra em <strong>Compras</strong>, com o fornecedor, a data e as linhas. O total é calculado automaticamente.</li>
+            <li>Receba as quantidades compradas no armazém ou numa obra.</li>
             <li>Use <strong>Movimentos</strong> para transferir, devolver ou corrigir quantidades.</li>
             <li>Consulte os saldos e o histórico na obra, no artigo ou em <strong>Movimentos</strong>.</li>
           </ol>
@@ -87,17 +87,17 @@
 
         <section class="help-section" id="compras" aria-labelledby="compras-title">
           <h2 id="compras-title">Compras</h2>
-          <p>Uma compra tem fornecedor, data, total e observações opcionais. O total da compra é independente da soma dos subtotais das linhas e não é apresentado como despesa de uma obra.</p>
+          <p>Uma compra tem fornecedor, data e observações opcionais. O total é calculado a partir das linhas, somando quantidade × preço unitário, e não é apresentado como despesa de uma obra.</p>
           <p>Cada linha da compra pode estar associada a um artigo do catálogo ou ser apenas texto livre. A descrição e a unidade ficam registadas como foram introduzidas, mesmo que o artigo seja alterado mais tarde.</p>
-          <p>O preço unitário é opcional. Quando não existe preço, o subtotal não é apresentado.</p>
-          <p>Uma compra pode ser guardada com quantidades por alocar. Uma linha sem artigo do catálogo não pode ser alocada até ser associada a um artigo. O limite é de 50 linhas por compra.</p>
+          <p>O preço unitário é obrigatório. Cada linha mostra o seu subtotal e a compra mostra a soma dos subtotais.</p>
+          <p>Uma compra pode ser guardada com quantidades por receber. Uma linha sem artigo do catálogo não pode ser recebida até ser associada a um artigo. O limite é de 50 linhas por compra.</p>
         </section>
 
-        <section class="help-section" id="alocacao" aria-labelledby="alocacao-title">
-          <h2 id="alocacao-title">Alocação de compras</h2>
-          <p>Depois de guardar uma compra, pode distribuir as quantidades compradas pelo armazém ou por uma obra. A alocação é opcional e pode ser feita mais tarde a partir da compra.</p>
-          <p>Uma linha pode ser dividida por várias localizações. Cada alocação cria uma entrada inicial ligada à linha da compra.</p>
-          <p>A quantidade total alocada nunca pode exceder a quantidade comprada. Uma linha pode ficar parcialmente alocada; a quantidade restante aparece como “por alocar”.</p>
+        <section class="help-section" id="rececoes" aria-labelledby="rececoes-title">
+          <h2 id="rececoes-title">Receções de compras</h2>
+          <p>Depois de guardar uma compra, pode registar a entrada das quantidades no armazém ou numa obra. A receção é opcional e pode ser feita mais tarde a partir da compra.</p>
+          <p>Uma linha pode ser dividida por várias localizações. Cada receção cria uma entrada inicial ligada à linha da compra.</p>
+          <p>A quantidade total recebida nunca pode exceder a quantidade comprada. Uma linha pode ficar parcialmente recebida; a quantidade restante aparece como “por receber”.</p>
         </section>
 
         <section class="help-section" id="movimentos" aria-labelledby="movimentos-title">
@@ -135,11 +135,11 @@
         <section class="help-section" id="erros-comuns" aria-labelledby="erros-comuns-title">
           <h2 id="erros-comuns-title">Erros comuns</h2>
           <dl class="help-faq">
-            <dt>“A quantidade excede o que falta alocar neste artigo.”</dt>
-            <dd>A linha já tem parte da quantidade alocada. Verifique a quantidade restante antes de tentar novamente.</dd>
+            <dt>“A quantidade excede o que falta receber nesta linha.”</dt>
+            <dd>A linha já tem parte da quantidade recebida. Verifique a quantidade restante antes de tentar novamente.</dd>
 
             <dt>“O artigo da compra tem de estar associado ao catálogo.”</dt>
-            <dd>A linha foi criada apenas com texto livre. Edite a compra e associe um artigo do catálogo antes de alocar.</dd>
+            <dd>A linha foi criada apenas com texto livre. Edite a compra e associe um artigo do catálogo antes de receber.</dd>
 
             <dt>“A quantidade transferida excede o saldo registado na origem.”</dt>
             <dd>A localização de origem não tem quantidade registada suficiente. Consulte os saldos e o histórico.</dd>

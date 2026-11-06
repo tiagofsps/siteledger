@@ -262,9 +262,9 @@ Rules:
     warehouse.
 -   A purchase may be saved before all its quantities have been assigned
     to locations.
--   The purchase total is independent of purchase-line subtotals.
--   The purchase total must not be allocated to a project or presented
-    as a project's expense.
+-   The purchase total is the sum of the purchase-line subtotals,
+    rounded per line with ROUND_HALF_UP.
+-   The purchase total must not be presented as a project expense.
 -   A supplier referenced by a purchase cannot be deleted.
 
 ### 4.5. PurchaseItem
@@ -349,11 +349,11 @@ Rules:
     different locations.
 -   The total quantity of active initial-entry movements linked to a
     purchase line must not exceed the line's purchased quantity.
--   `unit_price` may be unknown (`None`). An unknown price must not be
-    treated as zero.
+-   `unit_price` is required for new and edited purchase lines.
 -   A purchase line with associated movements must not be deleted.
--   The subtotal is calculated only when a unit price is known. It does
-    not determine or override the purchase total.
+-   The subtotal is `quantity × unit_price`, rounded to cents with
+    ROUND_HALF_UP. The purchase total is the sum of the rounded
+    subtotals.
 
 ### 4.6. Location
 
@@ -649,31 +649,38 @@ Example:
   Return 10 from A to warehouse           +10         -10           0
   **Recorded balance**                 **50**      **30**      **20**
 
-### 5.2. Purchase-line allocation limit
+### 5.2. Purchase-line receipt limit
 
 For each purchase line:
 
-`Allocated quantity = Sum of active INITIAL_ENTRY movements linked to that purchase line`
+`Received quantity = Sum of active INITIAL_ENTRY movements linked to that purchase line`
 
-The allocated quantity must not exceed the purchase-line quantity.
+The received quantity must not exceed the purchase-line quantity.
 
-A purchase line may remain partially or entirely unallocated. This is
+A purchase line may remain partially or entirely unreceived. This is
 intentional and must not prevent the purchase from being saved.
 
-When registering a purchase, users must be able to allocate purchased quantities immediately to one or more locations.
+When registering a purchase, users must be able to receive purchased
+quantities immediately into one or more locations.
 
 Available destinations include:
 - The logical warehouse (WAREHOUSE).
 - Any active project location (PROJECT).
-Each purchase line may be allocated to a single location or split across multiple locations.
 
-Each allocation creates an INITIAL_ENTRY stock movement linked to the corresponding PurchaseItem.
+Each purchase line may be received into a single location or split across
+multiple locations.
 
-Allocation is optional at purchase-registration time. A purchase and its purchase lines may be saved with quantities that remain partially or entirely unallocated.
+Each receipt creates an INITIAL_ENTRY stock movement linked to the
+corresponding PurchaseItem.
 
-Unallocated quantities can be allocated later through the purchase record.
+Receiving is optional at purchase-registration time. A purchase and its
+purchase lines may be saved with quantities that remain partially or
+entirely unreceived.
 
-The total quantity allocated from a purchase line must never exceed its purchased quantity.
+Unreceived quantities can be received later through the purchase record.
+
+The total quantity received from a purchase line must never exceed its
+purchased quantity.
 
 ### 5.3. Transfer balance validation
 
@@ -794,7 +801,7 @@ The implemented permission matrix is:
 -   `inventory.view_stockmovement`, `inventory.add_stockmovement`,
     `inventory.change_stockmovement`.
 
-Purchase-line allocation requires `purchases.change_purchase` and
+Purchase-line receipt requires `purchases.change_purchase` and
 `inventory.view_location`.
 
 ## 11. Deletion and deactivation
@@ -830,7 +837,7 @@ Domain/service-layer validation is required for cross-record or
 transactional rules, including:
 
 -   Transfer does not exceed source balance.
--   Purchase-line allocation does not exceed purchased quantity.
+-   Purchase-line receipt does not exceed purchased quantity.
 -   Movement item matches purchase-line item.
 -   Unit compatibility.
 -   Archived/inactive location restrictions.
@@ -876,9 +883,9 @@ into the current model.
 4.  **Adjustments:** A mandatory justification is required. Adjustments
     use `inventory.add_stockmovement`; no separate permission is
     introduced.
-5.  **Unallocated purchases:** A purchase may be saved while some or all
-    purchase-line quantities remain unallocated. Quantities can be
-    allocated later.
+5.  **Unreceived purchases:** A purchase may be saved while some or all
+    purchase-line quantities remain unreceived. Quantities can be
+    received later.
 
 ## 15. Implementation notes
 

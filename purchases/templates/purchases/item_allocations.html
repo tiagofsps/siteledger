@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Alocações de {{ item.description }} | Compras{% endblock %}
+{% block title %}Receções de {{ item.description }} | Compras{% endblock %}
 
 {% block content %}
   <nav class="breadcrumbs" aria-label="Caminho">
@@ -21,20 +21,20 @@
   </div>
 
   <section class="detail-panel" aria-labelledby="allocation-summary">
-    <h2 id="allocation-summary" class="visually-hidden">Resumo das alocações</h2>
+    <h2 id="allocation-summary" class="visually-hidden">Resumo das receções</h2>
     <dl class="detail-list">
       <div>
-        <dt>Quantidade alocada</dt>
+        <dt>Quantidade recebida</dt>
         <dd>{{ active_allocated|floatformat:3 }} {{ item.unit }}</dd>
       </div>
       <div>
-        <dt>Por alocar</dt>
+        <dt>Por receber</dt>
         <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
       </div>
       {% if not item.item_id %}
         <div>
           <dt>Catálogo</dt>
-          <dd>Associe um artigo do catálogo antes de alocar quantidades.</dd>
+          <dd>Associe um artigo do catálogo antes de receber quantidades.</dd>
         </div>
       {% endif %}
     </dl>
@@ -42,7 +42,7 @@
 
   {% if item.item_id %}
     <section class="section-block" aria-labelledby="new-allocation">
-      <h2 id="new-allocation">Nova alocação</h2>
+      <h2 id="new-allocation">Nova receção</h2>
       <form class="form-card" method="post" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
@@ -57,12 +57,12 @@
             {{ form.quantity.label_tag }}
             {{ form.quantity }}
             {{ form.quantity.errors }}
-            <p class="help-text">A quantidade não pode exceder o que falta alocar nesta compra.</p>
+            <p class="help-text">A quantidade não pode exceder o que falta receber nesta compra.</p>
           </div>
         </div>
 
         <div class="form-actions">
-          <button class="button" type="submit">Alocar material</button>
+          <button class="button" type="submit">Receber material</button>
           <a class="button button--secondary" href="{{ purchase.get_absolute_url }}">Voltar à compra</a>
         </div>
       </form>
@@ -111,7 +111,7 @@
         </table>
       </div>
     {% else %}
-      <p class="empty-state">Este artigo ainda não tem movimentos.</p>
+      <p class="empty-state">Esta linha ainda não tem movimentos.</p>
     {% endif %}
   </section>
 {% endblock %}

@@ -74,7 +74,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
         cancel_stock_movement(
             movement=movement,
             user=self.user,
-            reason="Alocação errada",
+            reason="Receção errada",
         )
 
         self.assertEqual(
@@ -95,7 +95,6 @@ class PurchaseAllocationIntegrationTests(TestCase):
             {
                 "supplier": self.purchase.supplier.pk,
                 "purchase_date": "2026-01-10",
-                "total": "100.00",
                 "notes": "",
                 "items-TOTAL_FORMS": "1",
                 "items-INITIAL_FORMS": "0",
@@ -105,7 +104,7 @@ class PurchaseAllocationIntegrationTests(TestCase):
                 "items-0-description": "",
                 "items-0-unit": "",
                 "items-0-quantity": "2.000",
-                "items-0-unit_price": "",
+                "items-0-unit_price": "10.00",
             },
         )
         self.assertEqual(response.status_code, 302)

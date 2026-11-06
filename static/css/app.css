@@ -1052,6 +1052,45 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.form-field--subtotal {
+  align-self: end;
+}
+
+.form-label {
+  font-weight: 600;
+}
+
+.line-subtotal {
+  align-items: center;
+  display: flex;
+  font-variant-numeric: tabular-nums;
+  min-height: 2.75rem;
+}
+
+.purchase-total-preview {
+  align-items: baseline;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+}
+
+.purchase-total-preview-label {
+  font-weight: 600;
+}
+
+.purchase-total-preview-value {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.purchase-total-preview .help-text {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .inline-actions {
   display: flex;
   flex-wrap: wrap;

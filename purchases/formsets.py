@@ -21,7 +21,7 @@ class BasePurchaseItemFormSet(BaseInlineFormSet):
                 if instance.pk and instance.movements.exists():
                     form.add_error(
                         "DELETE",
-                        "Não é possível eliminar um artigo com movimentos registados.",
+                        "Não é possível eliminar uma linha com movimentos registados.",
                     )
                 continue
 
@@ -37,12 +37,12 @@ class BasePurchaseItemFormSet(BaseInlineFormSet):
                         "quantity",
                         (
                             "A quantidade não pode ser inferior à quantidade "
-                            f"já alocada ({allocated})."
+                            f"já recebida ({allocated})."
                         ),
                     )
 
         if not has_items:
-            raise forms.ValidationError("A compra tem de ter pelo menos um artigo.")
+            raise forms.ValidationError("A compra tem de ter pelo menos uma linha.")
 
 
 PurchaseItemFormSet = inlineformset_factory(

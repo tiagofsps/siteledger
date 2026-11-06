@@ -18,7 +18,7 @@ Recorded balances are theoretical quantities derived from active movements. They
 
 - `Project`: construction project with a name, address, optional description, start date, status and archive timestamp.
 - `Supplier`: shop or supplier with a case-insensitively unique name and an active flag.
-- `Purchase`: supplier, purchase date, independent total and optional notes.
+- `Purchase`: supplier, purchase date, computed total and optional notes.
 - `PurchaseItem`: purchase line with an optional catalogue item, snapshot description, snapshot unit, positive quantity and optional unit price.
 - `Item`: shared catalogue of materials, equipment and reusable materials, with one reference unit.
 - `Location`: one logical warehouse and one location per project.
@@ -34,8 +34,8 @@ Movement types:
 ## Key business rules
 
 - A purchase must contain at least one item.
-- Purchase totals are independent from item subtotals.
-- Item subtotals are displayed only when a unit price exists and use `ROUND_HALF_UP`.
+- Purchase totals are computed from the line subtotals.
+- Item subtotals use `ROUND_HALF_UP` and the unit price is required.
 - A purchase and its lines may be saved partially or entirely unallocated.
 - After saving a purchase, quantities can be allocated immediately from the purchase allocation page, or later from the purchase record.
 - Each allocation creates an `INITIAL_ENTRY` movement linked to the purchase line.

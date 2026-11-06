@@ -43,13 +43,12 @@ class SupplierFilterForm(forms.Form):
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields = ("supplier", "purchase_date", "total", "notes")
+        fields = ("supplier", "purchase_date", "notes")
         widgets = {
             "purchase_date": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={"type": "date"},
             ),
-            "total": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -61,8 +60,6 @@ class PurchaseForm(forms.ModelForm):
                 Q(pk=self.instance.supplier_id) | Q(is_active=True)
             )
         self.fields["supplier"].queryset = suppliers.order_by("name")
-        self.fields["total"].min_value = Decimal("0.00")
-        self.fields["total"].validators.append(MinValueValidator(Decimal("0.00")))
         if not self.instance.pk and not self.initial.get("purchase_date"):
             self.initial["purchase_date"] = date.today()
 
@@ -71,6 +68,11 @@ class PurchaseItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseItem
         fields = ("item", "description", "unit", "quantity", "unit_price")
+        labels = {
+            "description": "Descrição",
+            "unit": "Unidade",
+            "unit_price": "Preço unitário",
+        }
         widgets = {
             "unit": forms.TextInput(attrs={"list": "unit-options"}),
             "quantity": forms.NumberInput(attrs={"step": "0.001", "min": "0.001"}),
@@ -88,6 +90,7 @@ class PurchaseItemForm(forms.ModelForm):
         self.fields["item"].empty_label = "Sem artigo do catálogo"
         self.fields["description"].required = False
         self.fields["unit"].required = False
+        self.fields["unit_price"].required = True
         self.fields["quantity"].min_value = Decimal("0.001")
         self.fields["quantity"].validators.append(MinValueValidator(Decimal("0.001")))
         self.fields["unit_price"].min_value = Decimal("0.00")
@@ -179,7 +182,7 @@ class AllocationForm(forms.Form):
         if location.location_type == Location.Type.PROJECT and location.project.is_archived:
             self.add_error(
                 "location",
-                "Não é possível alocar quantidades a uma obra arquivada.",
+                "Não é possível receber quantidades numa obra arquivada.",
             )
         if self.item.item_id is None:
             self.add_error(
@@ -193,7 +196,7 @@ class AllocationForm(forms.Form):
             self.add_error(
                 "quantity",
                 (
-                    "A quantidade excede o que falta alocar neste artigo "
+                    "A quantidade excede o que falta receber nesta linha "
                     f"({self.item.quantity - allocated})."
                 ),
             )

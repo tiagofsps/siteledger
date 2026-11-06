@@ -28,11 +28,10 @@ PURCHASE_PERMISSIONS = (
 )
 
 
-def purchase_form_data(*, supplier, purchase_date="2026-01-10", total="100.00", item=None, quantity="2.000"):
+def purchase_form_data(*, supplier, purchase_date="2026-01-10", item=None, quantity="2.000"):
     data = {
         "supplier": supplier.pk,
         "purchase_date": purchase_date,
-        "total": total,
         "notes": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
@@ -42,7 +41,7 @@ def purchase_form_data(*, supplier, purchase_date="2026-01-10", total="100.00", 
         "items-0-description": "",
         "items-0-unit": "",
         "items-0-quantity": quantity,
-        "items-0-unit_price": "",
+        "items-0-unit_price": "10.00",
     }
     return data
 
@@ -99,6 +98,72 @@ class PurchaseViewTests(TestCase):
         purchase_item = purchase.items.get()
         self.assertEqual(purchase_item.description, self.item.name)
         self.assertEqual(purchase_item.unit, self.item.unit)
+        self.assertEqual(purchase.total, Decimal("20.00"))
+
+    def test_total_is_computed_from_lines(self):
+        data = purchase_form_data(
+            supplier=self.supplier,
+            item=self.item,
+            quantity="3.000",
+        )
+        data["items-TOTAL_FORMS"] = "2"
+        data["items-1-item"] = self.item.pk
+        data["items-1-description"] = ""
+        data["items-1-unit"] = ""
+        data["items-1-quantity"] = "2.500"
+        data["items-1-unit_price"] = "4.20"
+
+        response = self.client.post(reverse("purchases:purchase_create"), data)
+
+        self.assertEqual(response.status_code, 302)
+        purchase = Purchase.objects.get()
+        self.assertEqual(purchase.total, Decimal("40.50"))
+
+    def test_unit_price_is_required(self):
+        data = purchase_form_data(supplier=self.supplier, item=self.item)
+        data["items-0-unit_price"] = ""
+
+        response = self.client.post(reverse("purchases:purchase_create"), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Este campo é obrigatório.")
+        self.assertFalse(Purchase.objects.exists())
+
+    def test_update_recalculates_total(self):
+        purchase = create_purchase(supplier=self.supplier)
+        purchase_item = create_purchase_item(
+            purchase=purchase,
+            item=self.item,
+            description=self.item.name,
+            unit=self.item.unit,
+            quantity=Decimal("2"),
+            unit_price=Decimal("10.00"),
+        )
+
+        data = {
+            "supplier": self.supplier.pk,
+            "purchase_date": "2026-01-10",
+            "notes": "",
+            "items-TOTAL_FORMS": "1",
+            "items-INITIAL_FORMS": "1",
+            "items-MIN_NUM_FORMS": "0",
+            "items-MAX_NUM_FORMS": "50",
+            "items-0-id": str(purchase_item.pk),
+            "items-0-purchase": str(purchase.pk),
+            "items-0-item": str(self.item.pk),
+            "items-0-description": self.item.name,
+            "items-0-unit": self.item.unit,
+            "items-0-quantity": "2.000",
+            "items-0-unit_price": "12.50",
+        }
+        response = self.client.post(
+            reverse("purchases:purchase_update", args=[purchase.pk]),
+            data,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        purchase.refresh_from_db()
+        self.assertEqual(purchase.total, Decimal("25.00"))
 
     def test_create_form_contains_wizard_progress(self):
         response = self.client.get(reverse("purchases:purchase_create"))
@@ -107,8 +172,8 @@ class PurchaseViewTests(TestCase):
         self.assertContains(response, "data-wizard")
         self.assertContains(response, "form-progress")
         self.assertContains(response, ">Dados<")
-        self.assertContains(response, ">Artigos<")
-        self.assertContains(response, ">Alocação<")
+        self.assertContains(response, ">Linhas<")
+        self.assertContains(response, ">Receção<")
 
     def test_create_invalid_header_opens_first_step(self):
         data = purchase_form_data(supplier=self.supplier, item=self.item)
@@ -146,9 +211,10 @@ class PurchaseViewTests(TestCase):
     def test_purchase_requires_at_least_one_item(self):
         data = purchase_form_data(supplier=self.supplier, item=None)
         data["items-0-quantity"] = ""
+        data["items-0-unit_price"] = ""
         response = self.client.post(reverse("purchases:purchase_create"), data)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "pelo menos um artigo")
+        self.assertContains(response, "pelo menos uma linha")
 
     def test_create_can_be_retried_after_item_validation_error(self):
         data = purchase_form_data(supplier=self.supplier, item=self.item)
@@ -184,7 +250,6 @@ class PurchaseViewTests(TestCase):
         data = {
             "supplier": self.supplier.pk,
             "purchase_date": "2026-01-10",
-            "total": "100.00",
             "notes": "",
             "items-TOTAL_FORMS": "1",
             "items-INITIAL_FORMS": "1",
@@ -196,7 +261,7 @@ class PurchaseViewTests(TestCase):
             "items-0-description": self.item.name,
             "items-0-unit": self.item.unit,
             "items-0-quantity": "2.000",
-            "items-0-unit_price": "",
+            "items-0-unit_price": "10.00",
         }
         response = self.client.post(
             reverse("purchases:purchase_update", args=[purchase.pk]),
@@ -264,7 +329,7 @@ class PurchaseViewTests(TestCase):
             {"location": warehouse().pk, "quantity": "3.000"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "excede o que falta alocar")
+        self.assertContains(response, "excede o que falta receber")
 
     def test_purchase_list_links_to_suppliers(self):
         response = self.client.get(reverse("purchases:purchase_list"))
@@ -309,7 +374,7 @@ class PurchaseViewTests(TestCase):
         )
         create_purchase_item(
             purchase=purchase,
-            description="Artigo por alocar",
+            description="Linha por receber",
             unit="un",
             quantity=Decimal("2"),
         )
@@ -403,7 +468,7 @@ class PurchaseAllocationViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.item.name)
         self.assertContains(response, f"name=\"allocation-{self.purchase_item.pk}-quantity\"")
-        self.assertContains(response, "por alocar")
+        self.assertContains(response, "por receber")
 
     def test_post_allocates_and_redirects(self):
         response = self.client.post(
@@ -428,7 +493,7 @@ class PurchaseAllocationViewTests(TestCase):
             self.allocation_data(self.purchase_item, quantity="6.000"),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "excede o que falta alocar")
+        self.assertContains(response, "excede o que falta receber")
         self.assertFalse(
             StockMovement.objects.filter(purchase_item=self.purchase_item).exists()
         )
@@ -444,7 +509,7 @@ class PurchaseAllocationViewTests(TestCase):
             reverse("purchases:purchase_allocations", args=[self.purchase.pk])
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "totalmente alocado")
+        self.assertContains(response, "totalmente recebida")
         self.assertNotContains(
             response,
             f"name=\"allocation-{self.purchase_item.pk}-quantity\"",

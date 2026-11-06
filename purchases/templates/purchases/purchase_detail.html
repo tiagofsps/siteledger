@@ -17,7 +17,7 @@
     {% if can_change_purchase %}
       <div class="page-actions">
         {% if can_allocate and has_pending_allocations %}
-          <a class="button" href="{% url 'purchases:purchase_allocations' purchase.pk %}">Alocar quantidades</a>
+          <a class="button" href="{% url 'purchases:purchase_allocations' purchase.pk %}">Receber quantidades</a>
         {% endif %}
         <a class="button button--secondary" href="{% url 'purchases:purchase_update' purchase.pk %}">Editar</a>
       </div>
@@ -49,7 +49,7 @@
   </section>
 
   <section class="section-block" aria-labelledby="purchase-items">
-    <h2 id="purchase-items">Artigos</h2>
+    <h2 id="purchase-items">Linhas da compra</h2>
 
     {% if items %}
       <div class="item-list">
@@ -77,25 +77,25 @@
 
             <dl class="obra-meta">
               <div>
-                <dt>Alocada</dt>
+                <dt>Recebido</dt>
                 <dd>{{ item.active_allocated|default_if_none:0|floatformat:3 }} {{ item.unit }}</dd>
               </div>
               <div>
-                <dt>Por alocar</dt>
+                <dt>Por receber</dt>
                 <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
               </div>
             </dl>
 
             {% if can_allocate %}
               <div class="item-card-actions">
-                <a class="button button--secondary button--small" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Gerir alocações</a>
+                <a class="button button--secondary button--small" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Receber</a>
               </div>
             {% endif %}
 
             {% if item.movements.all %}
               <div class="table-scroll">
                 <table class="data-table">
-                  <caption class="visually-hidden">Movimentos de {{ item.description }}</caption>
+                  <caption class="visually-hidden">Receções de {{ item.description }}</caption>
                   <thead>
                     <tr>
                       <th scope="col">Data</th>
@@ -123,13 +123,13 @@
                 </table>
               </div>
             {% else %}
-              <p class="text-muted">Este artigo ainda não foi alocado.</p>
+              <p class="text-muted">Esta linha ainda não foi recebida.</p>
             {% endif %}
           </article>
         {% endfor %}
       </div>
     {% else %}
-      <p class="empty-state">Esta compra ainda não tem artigos.</p>
+      <p class="empty-state">Esta compra ainda não tem linhas.</p>
     {% endif %}
   </section>
 
