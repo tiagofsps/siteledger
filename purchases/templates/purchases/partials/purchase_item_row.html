@@ -17,9 +17,7 @@
         <noscript>
           <a class="button button--secondary button--small" href="{% url 'inventory:item_create' %}">Criar artigo noutra página</a>
         </noscript>
-        <div id="{{ form.prefix }}-quick"></div>
       {% endif %}
-      <p id="{{ form.prefix }}-quick-status" class="help-text" role="status"></p>
     </div>
     <div class="form-field{% if form.quantity.errors %} form-field--error{% endif %}">
       {{ form.quantity.label_tag }}
@@ -36,6 +34,10 @@
       <output class="line-subtotal" data-line-subtotal>—</output>
     </div>
   </div>
+  {% if perms.inventory.add_item %}
+    <div id="{{ form.prefix }}-quick" class="quick-item-slot"></div>
+  {% endif %}
+  <p id="{{ form.prefix }}-quick-status" class="help-text" role="status"></p>
   {% if form.DELETE %}
     <label class="checkbox-field">{{ form.DELETE }} Remover linha</label>
   {% endif %}

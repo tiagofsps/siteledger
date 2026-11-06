@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from inventory.models import Item, Location
 from inventory.units import is_discrete, quantity_step, validate_quantity
+from inventory.widgets import UnitSelect
 from projects.models import Project
 
 from .models import Purchase, PurchaseItem, Supplier
@@ -76,6 +77,7 @@ class PurchaseItemForm(forms.ModelForm):
             "unit_price": "Preço unitário",
         }
         widgets = {
+            "item": UnitSelect,
             "quantity": forms.NumberInput(attrs={"step": "0.001", "min": "0.001"}),
             "unit_price": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
         }

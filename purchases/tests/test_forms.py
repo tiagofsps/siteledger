@@ -147,3 +147,15 @@ class PurchaseItemSnapshotTests(TestCase):
 
         self.assertEqual(line.description, original_description)
         self.assertEqual(line.unit_price, Decimal("12.00"))
+
+
+class UnitSelectTests(TestCase):
+    def test_item_options_expose_their_unit(self):
+        item = create_item(unit="sc")
+        form = PurchaseItemForm()
+
+        markup = str(form["item"])
+
+        self.assertIn('class="item-select"', markup)
+        self.assertIn(f'value="{item.pk}"', markup)
+        self.assertIn('data-unit="sc"', markup)

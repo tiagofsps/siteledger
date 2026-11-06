@@ -295,8 +295,9 @@ class ItemQuickCreateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="prefix" value="items-0"')
         self.assertContains(response, "Criar artigo")
+        self.assertContains(response, "data-quick-cancel")
 
-    def test_post_creates_item_and_returns_selected_option(self):
+    def test_post_creates_item_and_returns_selection_marker(self):
         response = self.client.post(
             reverse("inventory:item_quick_create"),
             {
@@ -310,9 +311,10 @@ class ItemQuickCreateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         item = Item.objects.get(name="Brita")
         self.assertEqual(item.unit, "m3")
-        self.assertContains(response, f'value="{item.pk}" selected')
-        self.assertContains(response, "hx-swap-oob")
-        self.assertContains(response, item.get_unit_display())
+        self.assertContains(response, "data-quick-item-created")
+        self.assertContains(response, f'data-item-id="{item.pk}"')
+        self.assertContains(response, 'data-prefix="items-0"')
+        self.assertContains(response, 'data-item-unit="m3"')
 
     def test_post_with_invalid_data_returns_form_errors(self):
         response = self.client.post(
