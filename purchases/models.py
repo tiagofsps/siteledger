@@ -5,6 +5,8 @@ from django.db.models import Q, Sum
 from django.db.models.functions import Lower
 from django.urls import reverse
 
+from inventory.units import Unit
+
 
 class Supplier(models.Model):
     name = models.CharField("nome", max_length=200)
@@ -70,11 +72,13 @@ class PurchaseItem(models.Model):
         on_delete=models.PROTECT,
         related_name="purchase_items",
         verbose_name="artigo do catálogo",
-        null=True,
-        blank=True,
     )
     description = models.CharField("artigo", max_length=300)
-    unit = models.CharField("unidade", max_length=30)
+    unit = models.CharField(
+        "unidade",
+        max_length=8,
+        choices=Unit.choices,
+    )
     quantity = models.DecimalField("quantidade", max_digits=12, decimal_places=3)
     unit_price = models.DecimalField(
         "preço unitário",
@@ -98,6 +102,10 @@ class PurchaseItem(models.Model):
             models.CheckConstraint(
                 condition=Q(unit_price__isnull=True) | Q(unit_price__gte=0),
                 name="purchase_item_unit_price_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=Q(unit__in=Unit.values),
+                name="purchase_item_unit_valid",
             ),
         ]
 

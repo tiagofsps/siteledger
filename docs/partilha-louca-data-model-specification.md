@@ -184,7 +184,10 @@ class Item(models.Model):
         choices=Category.choices,
     )
 
-    unit = models.CharField(max_length=30)
+    unit = models.CharField(
+        max_length=8,
+        choices=Unit.choices,
+    )
     description = models.TextField(blank=True)
 
     is_active = models.BooleanField(default=True)
@@ -196,7 +199,7 @@ class Item(models.Model):
         ordering = ["name"]
 
     def __str__(self):
-        return f"{self.name} ({self.unit})"
+        return f"{self.name} ({self.get_unit_display()})"
 ```
 
 Examples:
@@ -213,9 +216,12 @@ Rules:
 
 -   Item names are not globally unique. Similar names can exist; the
     user interface should help users find and reuse existing items.
--   Each item has one reference unit.
--   Quantities for the same item must use that reference unit. Unit
-    conversion is out of scope.
+-   Each item has one reference unit, chosen from a fixed enumeration:
+    `un`, `cx`, `sc`, `pl`, `rl`, `pct`, `md`, `m`, `m2`, `m3`,
+    `kg`, `t` and `l`. Unit conversion is out of scope.
+-   Piece-counted units (`un`, `cx`, `sc`, `pl`, `rl`, `pct`, `md`)
+    only accept whole quantities. The remaining units accept up to
+    three decimal places.
 -   Equipment is tracked by quantity, not by individually identified
     units.
 -   Inactive items remain in historical records but should not be
@@ -286,12 +292,13 @@ class PurchaseItem(models.Model):
         Item,
         on_delete=models.PROTECT,
         related_name="purchase_items",
-        null=True,
-        blank=True,
     )
 
     description = models.CharField(max_length=300)
-    unit = models.CharField(max_length=30)
+    unit = models.CharField(
+        max_length=8,
+        choices=Unit.choices,
+    )
 
     quantity = models.DecimalField(
         max_digits=12,
@@ -322,6 +329,10 @@ class PurchaseItem(models.Model):
                 ),
                 name="purchase_item_unit_price_non_negative",
             ),
+            models.CheckConstraint(
+                condition=models.Q(unit__in=Unit.values),
+                name="purchase_item_unit_valid",
+            ),
         ]
 
     @property
@@ -340,11 +351,11 @@ class PurchaseItem(models.Model):
 
 Rules:
 
--   `item` is optional to allow free-text purchase lines.
--   A line must reference an `Item` before it can generate stock
-    movements.
--   `description` and `unit` preserve what was recorded on the purchase,
-    even if the catalogue item is renamed later.
+-   `item` is required. Every purchase line selects a catalogue item.
+-   `description` and `unit` snapshot the catalogue item when the line is
+    saved, so they survive later item renames.
+-   The item cannot be changed once the line has receipts.
+-   The line quantity must respect the item's unit precision.
 -   One purchase line may generate multiple initial-entry movements to
     different locations.
 -   The total quantity of active initial-entry movements linked to a

@@ -166,15 +166,15 @@ class Command(BaseCommand):
 
     def _seed_items(self):
         definitions = (
-            ("cimento", "Cimento", Item.Category.MATERIAL, "saco"),
+            ("cimento", "Cimento", Item.Category.MATERIAL, "sc"),
             ("tijolo", "Tijolo", Item.Category.MATERIAL, "un"),
-            ("areia", "Areia", Item.Category.MATERIAL, "m³"),
+            ("areia", "Areia", Item.Category.MATERIAL, "m3"),
             ("betoneira", "Betoneira", Item.Category.EQUIPMENT, "un"),
             (
                 "andaime",
                 "Andaime",
                 Item.Category.REUSABLE_MATERIAL,
-                "módulo",
+                "md",
             ),
             (
                 "escora",
@@ -182,7 +182,7 @@ class Command(BaseCommand):
                 Item.Category.REUSABLE_MATERIAL,
                 "un",
             ),
-            ("tinta", "Tinta", Item.Category.MATERIAL, "lata"),
+            ("tinta", "Tinta", Item.Category.MATERIAL, "l"),
         )
 
         items = {}
@@ -259,13 +259,13 @@ class Command(BaseCommand):
                 quantity=Decimal("10.000"),
                 unit_price=Decimal("12.50"),
             ),
-            "free_text": self._seed_purchase_line(
+            "reusable": self._seed_purchase_line(
                 tools,
-                item=None,
-                description="Material avulso (demo)",
-                unit="un",
-                quantity=Decimal("2.000"),
-                unit_price=Decimal("8.00"),
+                item=items["escora"],
+                description=items["escora"].name,
+                unit=items["escora"].unit,
+                quantity=Decimal("8.000"),
+                unit_price=Decimal("9.50"),
             ),
         }
 

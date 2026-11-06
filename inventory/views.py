@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -14,6 +16,7 @@ from .forms import (
     InitialEntryForm,
     ItemForm,
     MovementFilterForm,
+    QuickItemForm,
     ReturnToWarehouseForm,
     TransferForm,
 )
@@ -27,12 +30,36 @@ from .services import (
     get_item_location_balances,
     return_to_warehouse,
 )
+from .units import Unit
 
 MOVEMENT_PERMISSIONS = [
     "inventory.add_stockmovement",
     "inventory.view_item",
     "inventory.view_location",
 ]
+
+
+@permission_required("inventory.add_item", raise_exception=True)
+@require_http_methods(["GET", "POST"])
+def item_quick_create(request):
+    """Create a catalogue item from inside the purchase line form."""
+    raw_prefix = request.POST.get("prefix") or request.GET.get("prefix") or ""
+    prefix = re.sub(r"[^\w-]", "", raw_prefix)[:40]
+    form = QuickItemForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        item = form.save()
+        return render(
+            request,
+            "inventory/partials/item_quick_created.html",
+            {"item": item, "prefix": prefix},
+        )
+
+    return render(
+        request,
+        "inventory/partials/item_quick_form.html",
+        {"form": form, "prefix": prefix},
+    )
 
 
 class ItemListView(PermissionRequiredMixin, ListView):
@@ -46,9 +73,15 @@ class ItemListView(PermissionRequiredMixin, ListView):
         queryset = super().get_queryset()
         query = self.request.GET.get("q", "").strip()
         if query:
+            matching_units = [
+                value
+                for value, label in Unit.choices
+                if query.casefold() in label.casefold()
+                or query.casefold() in value.casefold()
+            ]
             queryset = queryset.filter(
                 Q(name__icontains=query)
-                | Q(unit__icontains=query)
+                | Q(unit__in=matching_units)
                 | Q(description__icontains=query)
             )
         return queryset

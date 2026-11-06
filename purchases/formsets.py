@@ -25,7 +25,7 @@ class BasePurchaseItemFormSet(BaseInlineFormSet):
                     )
                 continue
 
-            if cleaned_data.get("description"):
+            if cleaned_data.get("item"):
                 has_items = True
 
             quantity = cleaned_data.get("quantity")

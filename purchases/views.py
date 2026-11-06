@@ -271,7 +271,7 @@ def purchase_create(request):
                 request.user.has_perm("purchases.change_purchase")
                 and request.user.has_perm("inventory.view_location")
             )
-            if can_allocate and purchase.items.filter(item__isnull=False).exists():
+            if can_allocate and purchase.items.exists():
                 return redirect(
                     "purchases:purchase_allocations",
                     pk=purchase.pk,
@@ -500,7 +500,7 @@ def purchase_item_row(request):
     formset = PurchaseItemFormSet(instance=Purchase(), prefix="items")
     form = formset.empty_form
     form.prefix = f"items-{total}"
-    form.auto_id = f"id_items-{total}-%s"
+    form.auto_id = "id_%s"
 
     return render(
         request,

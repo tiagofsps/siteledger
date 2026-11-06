@@ -79,7 +79,7 @@
               {% for balance in balances %}
                 <tr>
                   <td data-label="Artigo"><a href="{{ balance.item.get_absolute_url }}">{{ balance.item.name }}</a></td>
-                  <td data-label="Quantidade">{{ balance.quantity }} {{ balance.item.unit }}</td>
+                  <td data-label="Quantidade">{{ balance.quantity }} {{ balance.item.get_unit_display }}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -121,7 +121,7 @@
                   <td data-label="Artigo"><a href="{{ movement.item.get_absolute_url }}">{{ movement.item.name }}</a></td>
                   <td data-label="Origem">{{ movement.from_location|default:"—" }}</td>
                   <td data-label="Destino">{{ movement.to_location|default:"—" }}</td>
-                  <td data-label="Quantidade">{{ movement.quantity }} {{ movement.item.unit }}</td>
+                  <td data-label="Quantidade">{{ movement.quantity }} {{ movement.item.get_unit_display }}</td>
                   <td data-label="Estado">{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
                 </tr>
               {% endfor %}

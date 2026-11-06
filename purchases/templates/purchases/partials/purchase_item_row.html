@@ -6,16 +6,20 @@
       {{ form.item.label_tag }}
       {{ form.item }}
       {{ form.item.errors }}
-    </div>
-    <div class="form-field{% if form.description.errors %} form-field--error{% endif %}">
-      {{ form.description.label_tag }}
-      {{ form.description }}
-      {{ form.description.errors }}
-    </div>
-    <div class="form-field{% if form.unit.errors %} form-field--error{% endif %}">
-      {{ form.unit.label_tag }}
-      {{ form.unit }}
-      {{ form.unit.errors }}
+      {% if perms.inventory.add_item %}
+        <button
+          class="button button--secondary button--small"
+          type="button"
+          hx-get="{% url 'inventory:item_quick_create' %}?prefix={{ form.prefix }}"
+          hx-target="#{{ form.prefix }}-quick"
+          hx-swap="innerHTML"
+        >Novo artigo</button>
+        <noscript>
+          <a class="button button--secondary button--small" href="{% url 'inventory:item_create' %}">Criar artigo noutra página</a>
+        </noscript>
+        <div id="{{ form.prefix }}-quick"></div>
+      {% endif %}
+      <p id="{{ form.prefix }}-quick-status" class="help-text" role="status"></p>
     </div>
     <div class="form-field{% if form.quantity.errors %} form-field--error{% endif %}">
       {{ form.quantity.label_tag }}

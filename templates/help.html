@@ -80,7 +80,8 @@
 
         <section class="help-section" id="artigos" aria-labelledby="artigos-title">
           <h2 id="artigos-title">Artigos</h2>
-          <p>O catálogo é partilhado por materiais, equipamentos e materiais reutilizáveis. Cada artigo tem uma única unidade de referência; não há conversão de unidades.</p>
+          <p>O catálogo é partilhado por materiais, equipamentos e materiais reutilizáveis. Cada artigo tem uma única unidade de referência, escolhida de uma lista fixa: un, caixa, saco, palete, rolo, pacote, módulo, m, m², m³, kg, t e l. Não há conversão de unidades.</p>
+          <p>As unidades de peça (un, caixa, saco, palete, rolo, pacote e módulo) só aceitam quantidades inteiras. As restantes aceitam até três casas decimais.</p>
           <p>Os artigos não podem ser eliminados. Quando deixam de ser usados, devem ser desativados. Um artigo inativo mantém-se no histórico, mas não é oferecido em novos registos operacionais.</p>
           <p>Na página do artigo pode consultar os saldos registados por localização e o histórico de movimentos.</p>
         </section>
@@ -88,9 +89,9 @@
         <section class="help-section" id="compras" aria-labelledby="compras-title">
           <h2 id="compras-title">Compras</h2>
           <p>Uma compra tem fornecedor, data e observações opcionais. O total é calculado a partir das linhas, somando quantidade × preço unitário, e não é apresentado como despesa de uma obra.</p>
-          <p>Cada linha da compra pode estar associada a um artigo do catálogo ou ser apenas texto livre. A descrição e a unidade ficam registadas como foram introduzidas, mesmo que o artigo seja alterado mais tarde.</p>
+          <p>Cada linha escolhe um artigo do catálogo. A descrição e a unidade ficam registadas na linha, mesmo que o artigo seja alterado mais tarde. Se o artigo ainda não existir, crie-o na própria linha com <strong>Novo artigo</strong>.</p>
           <p>O preço unitário é obrigatório. Cada linha mostra o seu subtotal e a compra mostra a soma dos subtotais.</p>
-          <p>Uma compra pode ser guardada com quantidades por receber. Uma linha sem artigo do catálogo não pode ser recebida até ser associada a um artigo. O limite é de 50 linhas por compra.</p>
+          <p>Uma compra pode ser guardada com quantidades por receber. O limite é de 50 linhas por compra.</p>
         </section>
 
         <section class="help-section" id="rececoes" aria-labelledby="rececoes-title">
@@ -138,8 +139,8 @@
             <dt>“A quantidade excede o que falta receber nesta linha.”</dt>
             <dd>A linha já tem parte da quantidade recebida. Verifique a quantidade restante antes de tentar novamente.</dd>
 
-            <dt>“O artigo da compra tem de estar associado ao catálogo.”</dt>
-            <dd>A linha foi criada apenas com texto livre. Edite a compra e associe um artigo do catálogo antes de receber.</dd>
+            <dt>“A unidade deste artigo só admite quantidades inteiras.”</dt>
+            <dd>O artigo usa uma unidade de peça (un, caixa, saco, palete, rolo, pacote ou módulo). Indique uma quantidade sem casas decimais.</dd>
 
             <dt>“A quantidade transferida excede o saldo registado na origem.”</dt>
             <dd>A localização de origem não tem quantidade registada suficiente. Consulte os saldos e o histórico.</dd>

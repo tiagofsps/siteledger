@@ -1,15 +1,13 @@
-from datetime import date
 from decimal import Decimal
 
 from django.test import TestCase
 
-from inventory.tests.base import create_item, project_location, warehouse
+from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
 from projects.tests.base import create_project
 
 from purchases.forms import AllocationForm, PurchaseItemForm, SupplierForm
-from purchases.models import PurchaseItem
 
-from .base import create_purchase, create_purchase_item, create_supplier
+from .base import create_purchase_item, create_supplier
 
 
 class SupplierFormTests(TestCase):
@@ -22,48 +20,70 @@ class SupplierFormTests(TestCase):
 
 class PurchaseItemFormTests(TestCase):
     def setUp(self):
-        self.item = create_item()
+        self.item = create_item(unit="un")
 
-    def test_catalogue_item_fills_description_and_unit(self):
+    def test_item_is_required(self):
+        form = PurchaseItemForm(
+            data={"item": "", "quantity": "2.000", "unit_price": "10.00"}
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("item", form.errors)
+
+    def test_saved_line_snapshots_item_name_and_unit(self):
         form = PurchaseItemForm(
             data={
                 "item": self.item.pk,
-                "description": "",
-                "unit": "",
                 "quantity": "2.000",
                 "unit_price": "10.00",
             }
         )
         self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form.cleaned_data["description"], self.item.name)
-        self.assertEqual(form.cleaned_data["unit"], self.item.unit)
+        line = form.save(commit=False)
+        self.assertEqual(line.description, self.item.name)
+        self.assertEqual(line.unit, self.item.unit)
 
-    def test_free_text_item_requires_description_and_unit(self):
-        form = PurchaseItemForm(
-            data={
-                "item": "",
-                "description": "",
-                "unit": "",
-                "quantity": "2.000",
-                "unit_price": "10.00",
-            }
-        )
-        self.assertFalse(form.is_valid())
-        self.assertIn("description", form.errors)
-        self.assertIn("unit", form.errors)
-
-    def test_unit_must_match_catalogue_item(self):
+    def test_discrete_unit_rejects_fractional_quantity(self):
         form = PurchaseItemForm(
             data={
                 "item": self.item.pk,
-                "description": self.item.name,
-                "unit": "kg",
-                "quantity": "2.000",
+                "quantity": "1.500",
                 "unit_price": "10.00",
             }
         )
         self.assertFalse(form.is_valid())
-        self.assertIn("unit", form.errors)
+        self.assertIn("quantity", form.errors)
+
+    def test_continuous_unit_accepts_fractional_quantity(self):
+        item = create_item(name="Areia", unit="m3")
+        form = PurchaseItemForm(
+            data={
+                "item": item.pk,
+                "quantity": "1.500",
+                "unit_price": "10.00",
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_item_cannot_change_after_receipts(self):
+        other_item = create_item(name="Outro artigo", unit="un")
+        line = create_purchase_item(item=self.item, unit_price=Decimal("10.00"))
+        create_initial_entry(
+            item=self.item,
+            location=warehouse(),
+            quantity=Decimal("1"),
+            purchase_item=line,
+        )
+
+        form = PurchaseItemForm(
+            instance=line,
+            data={
+                "item": other_item.pk,
+                "quantity": "5.000",
+                "unit_price": "10.00",
+            },
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("item", form.errors)
 
 
 class AllocationFormTests(TestCase):
@@ -71,8 +91,6 @@ class AllocationFormTests(TestCase):
         self.item = create_item()
         self.purchase_item = create_purchase_item(
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("5"),
         )
 
@@ -96,32 +114,36 @@ class AllocationFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("location", form.errors)
 
-    def test_purchase_item_without_catalogue_item_is_rejected(self):
-        purchase_item = PurchaseItem.objects.create(
-            purchase=create_purchase(),
-            description="Sem catálogo",
-            unit="un",
-            quantity=Decimal("1"),
-        )
-        form = AllocationForm(
-            data={"location": warehouse().pk, "quantity": "1.000"},
-            item=purchase_item,
-        )
-        self.assertFalse(form.is_valid())
-        self.assertIn("__all__", form.errors)
-
 
 class UnitPriceRequirementTests(TestCase):
     def test_unit_price_is_required(self):
         item = create_item()
         form = PurchaseItemForm(
-            data={
-                "item": item.pk,
-                "description": "",
-                "unit": "",
-                "quantity": "2.000",
-                "unit_price": "",
-            }
+            data={"item": item.pk, "quantity": "2.000", "unit_price": ""}
         )
         self.assertFalse(form.is_valid())
         self.assertIn("unit_price", form.errors)
+
+
+class PurchaseItemSnapshotTests(TestCase):
+    def test_editing_a_line_keeps_the_original_snapshot(self):
+        item = create_item(name="Cimento", unit="sc")
+        line = create_purchase_item(item=item, unit_price=Decimal("10.00"))
+        original_description = line.description
+
+        item.name = "Cimento Portland"
+        item.save(update_fields=["name"])
+
+        form = PurchaseItemForm(
+            instance=line,
+            data={
+                "item": item.pk,
+                "quantity": "5.000",
+                "unit_price": "12.00",
+            },
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        line = form.save()
+
+        self.assertEqual(line.description, original_description)
+        self.assertEqual(line.unit_price, Decimal("12.00"))

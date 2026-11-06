@@ -14,7 +14,7 @@
           <tr>
             <td data-label="Artigo"><a href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
             <td data-label="Categoria">{{ item.get_category_display }}</td>
-            <td data-label="Unidade">{{ item.unit }}</td>
+            <td data-label="Unidade">{{ item.get_unit_display }}</td>
             <td data-label="Estado">{% if item.is_active %}Ativo{% else %}Inativo{% endif %}</td>
           </tr>
         {% endfor %}

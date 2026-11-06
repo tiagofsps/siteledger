@@ -6,6 +6,7 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 
 from .models import Item, Location, StockMovement
+from .units import validate_quantity
 
 ZERO = Decimal("0.000")
 
@@ -141,15 +142,11 @@ def _validate_outgoing_location(location):
 
 
 def _validate_purchase_item(purchase_item, item):
-    if purchase_item.item_id is None:
-        raise ValidationError(
-            "O artigo da compra tem de estar associado ao catálogo."
-        )
     if purchase_item.item_id != item.pk:
         raise ValidationError(
             "O artigo do movimento tem de coincidir com o artigo da compra."
         )
-    if purchase_item.unit.strip().casefold() != item.unit.strip().casefold():
+    if purchase_item.unit != item.unit:
         raise ValidationError(
             "A unidade da compra tem de coincidir com a unidade de referência do artigo."
         )
@@ -186,6 +183,7 @@ def create_initial_entry(
 ):
     _validate_positive(quantity)
     item = _lock_item(item)
+    validate_quantity(item.unit, quantity)
     locations = _lock_locations([to_location])
     to_location = locations[to_location.pk]
 
@@ -230,10 +228,6 @@ def allocate_purchase_item(
     purchase_item = PurchaseItem.objects.select_related("purchase", "item").get(
         pk=purchase_item.pk
     )
-    if purchase_item.item_id is None:
-        raise ValidationError(
-            "O artigo da compra tem de estar associado ao catálogo antes de ser alocado."
-        )
     return create_initial_entry(
         item=purchase_item.item,
         to_location=location,
@@ -258,6 +252,7 @@ def create_transfer(
 ):
     _validate_positive(quantity)
     item = _lock_item(item)
+    validate_quantity(item.unit, quantity)
     locations = _lock_locations([from_location, to_location])
     from_location = locations[from_location.pk]
     to_location = locations[to_location.pk]
@@ -320,6 +315,7 @@ def create_adjustment_in(
     _validate_positive(quantity)
     _require_reason(notes)
     item = _lock_item(item)
+    validate_quantity(item.unit, quantity)
     locations = _lock_locations([to_location])
     to_location = locations[to_location.pk]
 
@@ -350,6 +346,7 @@ def create_adjustment_out(
     _validate_positive(quantity)
     _require_reason(notes)
     item = _lock_item(item)
+    validate_quantity(item.unit, quantity)
     locations = _lock_locations([from_location])
     from_location = locations[from_location.pk]
 

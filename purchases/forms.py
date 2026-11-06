@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator
 from django.db.models import Q
 
 from inventory.models import Item, Location
+from inventory.units import validate_quantity
 from projects.models import Project
 
 from .models import Purchase, PurchaseItem, Supplier
@@ -67,14 +68,13 @@ class PurchaseForm(forms.ModelForm):
 class PurchaseItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseItem
-        fields = ("item", "description", "unit", "quantity", "unit_price")
+        fields = ("item", "quantity", "unit_price")
         labels = {
-            "description": "Descrição",
-            "unit": "Unidade",
+            "item": "Artigo do catálogo",
+            "quantity": "Quantidade",
             "unit_price": "Preço unitário",
         }
         widgets = {
-            "unit": forms.TextInput(attrs={"list": "unit-options"}),
             "quantity": forms.NumberInput(attrs={"step": "0.001", "min": "0.001"}),
             "unit_price": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
         }
@@ -87,37 +87,48 @@ class PurchaseItemForm(forms.ModelForm):
                 Q(pk=self.instance.item_id) | Q(is_active=True)
             )
         self.fields["item"].queryset = items.order_by("name")
-        self.fields["item"].empty_label = "Sem artigo do catálogo"
-        self.fields["description"].required = False
-        self.fields["unit"].required = False
-        self.fields["unit_price"].required = True
+        self.fields["item"].empty_label = "Selecione um artigo"
         self.fields["quantity"].min_value = Decimal("0.001")
         self.fields["quantity"].validators.append(MinValueValidator(Decimal("0.001")))
+        self.fields["unit_price"].required = True
         self.fields["unit_price"].min_value = Decimal("0.00")
         self.fields["unit_price"].validators.append(MinValueValidator(Decimal("0.00")))
 
     def clean(self):
         cleaned_data = super().clean()
         item = cleaned_data.get("item")
-        description = cleaned_data.get("description")
-        unit = cleaned_data.get("unit")
+        quantity = cleaned_data.get("quantity")
 
-        if item is not None:
-            if not description:
-                cleaned_data["description"] = item.name
-            if not unit:
-                cleaned_data["unit"] = item.unit
-            elif unit.strip().casefold() != item.unit.strip().casefold():
-                self.add_error(
-                    "unit",
-                    "A unidade tem de coincidir com a unidade de referência do artigo.",
-                )
-        else:
-            if not description:
-                self.add_error("description", "Este campo é obrigatório.")
-            if not unit:
-                self.add_error("unit", "Este campo é obrigatório.")
+        if item is not None and quantity is not None:
+            try:
+                validate_quantity(item.unit, quantity)
+            except ValidationError as error:
+                self.add_error("quantity", error)
+
+        if (
+            self.instance.pk
+            and self.instance.movements.exists()
+            and "item" in self.changed_data
+        ):
+            self.add_error(
+                "item",
+                "Não é possível alterar o artigo depois de existirem receções.",
+            )
+
         return cleaned_data
+
+    def save(self, commit=True):
+        previous_item_id = self.initial.get("item")
+        instance = super().save(commit=False)
+        item = self.cleaned_data["item"]
+        instance.item = item
+        if previous_item_id != item.pk:
+            instance.description = item.name
+            instance.unit = item.unit
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class PurchaseFilterForm(forms.Form):
@@ -184,12 +195,6 @@ class AllocationForm(forms.Form):
                 "location",
                 "Não é possível receber quantidades numa obra arquivada.",
             )
-        if self.item.item_id is None:
-            self.add_error(
-                None,
-                "O artigo da compra tem de estar associado ao catálogo antes de ser alocado.",
-            )
-            return cleaned_data
 
         allocated = active_allocated_quantity(self.item)
         if allocated + quantity > self.item.quantity:
