@@ -285,6 +285,10 @@ Commit messages follow the conventions documented in
 Render deployment is documented in
 [`docs/render-deployment.md`](docs/render-deployment.md).
 
+The current Render environment is a free evaluation deployment: the web service
+and database are free instances, the database expires after 30 days and has no
+backups. Do not enter real company data until it is upgraded to paid plans.
+
 - Configure `DJANGO_DEBUG=False`, a real `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
 - Use `DATABASE_URL` for Render PostgreSQL; `DJANGO_DB_ENGINE=postgresql` and the `DB_*` variables remain available as the alternative.
 - Ensure HTTPS and the appropriate security headers.

@@ -1,13 +1,15 @@
 # Render Blueprint for the Partilha Louca Operations Management application.
 #
-# Hobby workspace with small paid compute plans. Free compute is suitable only
-# for temporary testing: free web services spin down and free Postgres expires.
+# Evaluation configuration: both resources use free instances so the service can
+# be tried without a payment method. Free web services spin down after 15 minutes
+# of inactivity and free PostgreSQL databases are deleted after 30 days. See
+# docs/render-deployment.md for the limitations and the paid upgrade path.
 
 databases:
   - name: partilha-louca-db
     databaseName: partilha_louca
     user: partilha_louca
-    plan: 0.1c-256mb
+    plan: free
     region: frankfurt
     postgresMajorVersion: "17"
 
@@ -15,15 +17,16 @@ services:
   - type: web
     name: partilha-louca
     runtime: python
-    plan: 0.5c-512mb
+    plan: free
     region: frankfurt
-    # Deploys are triggered by the GitHub Actions deploy job through a deploy
-    # hook, after the test job passes.
-    autoDeployTrigger: "off"
+    # Render deploys a commit only after its GitHub checks pass, so a failing CI
+    # run never reaches production.
+    autoDeployTrigger: "checksPass"
     healthCheckPath: /login/
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    preDeployCommand: python manage.py migrate
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    # Free instances have no pre-deploy command and run a single instance, so
+    # migrations run in the build command.
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60
     maxShutdownDelaySeconds: 60
     envVars:
       - key: PYTHON_VERSION
