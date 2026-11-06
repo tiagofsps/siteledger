@@ -6,8 +6,6 @@
   <section class="login-page" aria-labelledby="login-title">
     <div class="form-card login-card">
       <h1 id="login-title">Entrar</h1>
-      <p class="page-subtitle">Acesso restrito à equipa SiteLedger.</p>
-
       <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
@@ -30,7 +28,7 @@
         </div>
       </form>
 
-      <p class="help-text login-help">Acesso apenas para utilizadores autorizados. Contacte o administrador se precisar de recuperar o acesso.</p>
+      <p class="help-text login-help">Acesso apenas para utilizadores autorizados.</p>
     </div>
   </section>
 {% endblock %}
