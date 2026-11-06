@@ -16,7 +16,7 @@
     </div>
     {% if can_cancel_movement and not movement.is_cancelled %}
       <div class="page-actions">
-        <a class="button button--danger" href="{% url 'inventory:movement_cancel' movement.pk %}">Cancelar movimento</a>
+        <a class="button" href="{% url 'inventory:movement_cancel' movement.pk %}">Cancelar movimento</a>
       </div>
     {% endif %}
   </div>
