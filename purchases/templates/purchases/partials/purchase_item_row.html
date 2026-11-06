@@ -8,7 +8,7 @@
       {{ form.item.errors }}
       {% if perms.inventory.add_item %}
         <button
-          class="button button--secondary button--small"
+          class="button button--secondary button--small quick-item-trigger"
           type="button"
           hx-get="{% url 'inventory:item_quick_create' %}?prefix={{ form.prefix }}"
           hx-target="#{{ form.prefix }}-quick"
