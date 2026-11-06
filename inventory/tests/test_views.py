@@ -39,21 +39,21 @@ class InventoryViewTests(TestCase):
             {
                 "name": "Areia",
                 "category": Item.Category.MATERIAL,
-                "unit": "m³",
+                "unit": "m3",
                 "description": "",
                 "is_active": "on",
             },
         )
         self.assertEqual(response.status_code, 302)
         created = Item.objects.get(name="Areia")
-        self.assertEqual(created.unit, "m³")
+        self.assertEqual(created.unit, "m3")
 
         response = self.client.post(
             reverse("inventory:item_update", args=[created.pk]),
             {
                 "name": "Areia fina",
                 "category": Item.Category.MATERIAL,
-                "unit": "m³",
+                "unit": "m3",
                 "description": "",
                 "is_active": "on",
             },
@@ -279,3 +279,85 @@ class InventoryAdminTests(TestCase):
         for model in (Item, Location, StockMovement):
             with self.subTest(model=model.__name__):
                 self.assertNotIn(model, admin.site._registry)
+
+
+class ItemQuickCreateTests(TestCase):
+    def setUp(self):
+        self.user = create_user("purchase-manager", permissions=INVENTORY_PERMISSIONS)
+        self.client.force_login(self.user)
+
+    def test_get_returns_inline_form(self):
+        response = self.client.get(
+            reverse("inventory:item_quick_create"),
+            {"prefix": "items-0"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="prefix" value="items-0"')
+        self.assertContains(response, "Criar artigo")
+
+    def test_post_creates_item_and_returns_selected_option(self):
+        response = self.client.post(
+            reverse("inventory:item_quick_create"),
+            {
+                "prefix": "items-0",
+                "name": "Brita",
+                "category": Item.Category.MATERIAL,
+                "unit": "m3",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        item = Item.objects.get(name="Brita")
+        self.assertEqual(item.unit, "m3")
+        self.assertContains(response, f'value="{item.pk}" selected')
+        self.assertContains(response, "hx-swap-oob")
+        self.assertContains(response, item.get_unit_display())
+
+    def test_post_with_invalid_data_returns_form_errors(self):
+        response = self.client.post(
+            reverse("inventory:item_quick_create"),
+            {"prefix": "items-0", "name": "", "category": "", "unit": ""},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "quick-item-form")
+        self.assertFalse(Item.objects.filter(name="").exists())
+
+    def test_prefix_is_sanitised(self):
+        response = self.client.get(
+            reverse("inventory:item_quick_create"),
+            {"prefix": 'x"onload="alert(1)'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "onload=")
+
+    def test_requires_add_item_permission(self):
+        self.client.force_login(create_user("viewer", permissions=("inventory.view_item",)))
+        response = self.client.get(reverse("inventory:item_quick_create"))
+        self.assertEqual(response.status_code, 403)
+
+
+class QuantityPrecisionTests(TestCase):
+    def setUp(self):
+        self.user = create_user("inventory-manager", permissions=INVENTORY_PERMISSIONS)
+        self.client.force_login(self.user)
+        self.warehouse = warehouse()
+
+    def test_movement_form_rejects_fractional_discrete_quantity(self):
+        item = create_item(name="Tijolo", unit="un")
+        response = self.client.post(
+            reverse("inventory:initial_entry_create"),
+            {
+                "item": item.pk,
+                "to_location": self.warehouse.pk,
+                "quantity": "1.500",
+                "movement_date": "2026-01-20",
+                "notes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "só admite quantidades inteiras")
+        self.assertFalse(StockMovement.objects.filter(item=item).exists())

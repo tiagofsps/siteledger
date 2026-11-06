@@ -21,6 +21,7 @@ PURCHASE_PERMISSIONS = (
     "purchases.add_purchase",
     "purchases.change_purchase",
     "inventory.view_item",
+    "inventory.add_item",
     "inventory.view_location",
     "inventory.view_stockmovement",
     "inventory.change_stockmovement",
@@ -38,8 +39,6 @@ def purchase_form_data(*, supplier, purchase_date="2026-01-10", item=None, quant
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "50",
         "items-0-item": item.pk if item else "",
-        "items-0-description": "",
-        "items-0-unit": "",
         "items-0-quantity": quantity,
         "items-0-unit_price": "10.00",
     }
@@ -110,14 +109,14 @@ class PurchaseViewTests(TestCase):
         data["items-1-item"] = self.item.pk
         data["items-1-description"] = ""
         data["items-1-unit"] = ""
-        data["items-1-quantity"] = "2.500"
+        data["items-1-quantity"] = "2.000"
         data["items-1-unit_price"] = "4.20"
 
         response = self.client.post(reverse("purchases:purchase_create"), data)
 
         self.assertEqual(response.status_code, 302)
         purchase = Purchase.objects.get()
-        self.assertEqual(purchase.total, Decimal("40.50"))
+        self.assertEqual(purchase.total, Decimal("38.40"))
 
     def test_unit_price_is_required(self):
         data = purchase_form_data(supplier=self.supplier, item=self.item)
@@ -175,6 +174,13 @@ class PurchaseViewTests(TestCase):
         self.assertContains(response, ">Linhas<")
         self.assertContains(response, ">Receção<")
 
+    def test_create_form_uses_catalogue_items_only(self):
+        response = self.client.get(reverse("purchases:purchase_create"))
+
+        self.assertContains(response, reverse("inventory:item_quick_create"))
+        self.assertNotContains(response, 'name="items-0-description"')
+        self.assertNotContains(response, 'name="items-0-unit"')
+
     def test_create_invalid_header_opens_first_step(self):
         data = purchase_form_data(supplier=self.supplier, item=self.item)
         data["supplier"] = ""
@@ -184,14 +190,12 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["wizard_initial_step"], 1)
 
-    def test_create_without_catalogue_item_redirects_to_detail(self):
+    def test_create_requires_catalogue_item(self):
         data = purchase_form_data(supplier=self.supplier, item=None)
-        data["items-0-description"] = "Material avulso"
-        data["items-0-unit"] = "un"
         response = self.client.post(reverse("purchases:purchase_create"), data)
-        self.assertEqual(response.status_code, 302)
-        purchase = Purchase.objects.get()
-        self.assertEqual(response["Location"], purchase.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Este campo é obrigatório.")
+        self.assertFalse(Purchase.objects.exists())
 
     def test_create_without_allocation_permissions_redirects_to_detail(self):
         self.client.force_login(
@@ -216,9 +220,12 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "pelo menos uma linha")
 
-    def test_create_can_be_retried_after_item_validation_error(self):
-        data = purchase_form_data(supplier=self.supplier, item=self.item)
-        data["items-0-unit"] = "unidade-errada"
+    def test_create_can_be_retried_after_line_validation_error(self):
+        data = purchase_form_data(
+            supplier=self.supplier,
+            item=self.item,
+            quantity="1.500",
+        )
         response = self.client.post(reverse("purchases:purchase_create"), data)
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["formset"].instance.pk)
@@ -374,8 +381,7 @@ class PurchaseViewTests(TestCase):
         )
         create_purchase_item(
             purchase=purchase,
-            description="Linha por receber",
-            unit="un",
+            item=create_item(name="Outro artigo"),
             quantity=Decimal("2"),
         )
         create_initial_entry(
@@ -515,20 +521,6 @@ class PurchaseAllocationViewTests(TestCase):
             f"name=\"allocation-{self.purchase_item.pk}-quantity\"",
         )
 
-    def test_free_text_line_shows_catalogue_guidance(self):
-        create_purchase_item(
-            purchase=self.purchase,
-            item=None,
-            description="Material avulso",
-            unit="un",
-            quantity=Decimal("2"),
-        )
-        response = self.client.get(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Associe um artigo do catálogo")
-
     def test_inactive_catalogue_item_has_no_form(self):
         self.item.is_active = False
         self.item.save(update_fields=["is_active"])
@@ -595,6 +587,7 @@ class PurchaseItemRowTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="items-1-item"')
+        self.assertContains(response, 'id="id_items-1-item"')
         self.assertContains(response, 'name="items-1-purchase"')
         self.assertContains(response, 'name="items-TOTAL_FORMS" value="2"')
         self.assertContains(response, "hx-swap-oob")

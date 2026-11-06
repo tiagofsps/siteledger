@@ -12,7 +12,7 @@
   <div class="page-header">
     <div>
       <h1>{{ movement.get_movement_type_display }}</h1>
-      <p class="page-subtitle">{{ movement.item.name }} · {{ movement.quantity }} {{ movement.item.unit }}</p>
+      <p class="page-subtitle">{{ movement.item.name }} · {{ movement.quantity }} {{ movement.item.get_unit_display }}</p>
     </div>
     {% if can_cancel_movement and not movement.is_cancelled %}
       <div class="page-actions">
@@ -41,7 +41,7 @@
       </div>
       <div>
         <dt>Quantidade</dt>
-        <dd>{{ movement.quantity }} {{ movement.item.unit }}</dd>
+        <dd>{{ movement.quantity }} {{ movement.item.get_unit_display }}</dd>
       </div>
       <div>
         <dt>Origem</dt>

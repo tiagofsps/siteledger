@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
+from inventory.tests.base import create_item
 from purchases.models import Purchase, PurchaseItem, Supplier
 
 
@@ -28,16 +29,17 @@ def create_purchase_item(
     *,
     purchase=None,
     item=None,
-    description="Artigo de teste",
-    unit="un",
+    description=None,
+    unit=None,
     quantity=Decimal("5.000"),
     unit_price=None,
 ):
+    item = item or create_item()
     return PurchaseItem.objects.create(
         purchase=purchase or create_purchase(),
         item=item,
-        description=description,
-        unit=unit,
+        description=description or item.name,
+        unit=unit or item.unit,
         quantity=quantity,
         unit_price=unit_price,
     )

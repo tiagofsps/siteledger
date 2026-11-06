@@ -1,0 +1,27 @@
+<form
+  class="quick-item-form"
+  method="post"
+  action="{% url 'inventory:item_quick_create' %}?prefix={{ prefix }}"
+  hx-post="{% url 'inventory:item_quick_create' %}?prefix={{ prefix }}"
+  hx-target="this"
+  hx-swap="outerHTML"
+  novalidate
+>
+  {% csrf_token %}
+  <input type="hidden" name="prefix" value="{{ prefix }}">
+  {{ form.non_field_errors }}
+
+  <div class="quick-item-fields">
+    {% for field in form %}
+      <div class="form-field{% if field.errors %} form-field--error{% endif %}">
+        {{ field.label_tag }}
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="form-actions">
+    <button class="button button--small" type="submit">Criar artigo</button>
+  </div>
+</form>

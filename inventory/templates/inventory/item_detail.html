@@ -12,7 +12,7 @@
   <div class="page-header">
     <div>
       <h1>{{ item.name }}</h1>
-      <p class="page-subtitle">{{ item.get_category_display }} · Unidade: {{ item.unit }}{% if not item.is_active %} · Inativo{% endif %}</p>
+      <p class="page-subtitle">{{ item.get_category_display }} · Unidade: {{ item.get_unit_display }}{% if not item.is_active %} · Inativo{% endif %}</p>
     </div>
     <div class="page-actions">
       {% if can_change_item %}
@@ -59,7 +59,7 @@
                       {{ balance.location.name }}
                     {% endif %}
                   </td>
-                  <td data-label="Quantidade">{{ balance.quantity }} {{ item.unit }}</td>
+                  <td data-label="Quantidade">{{ balance.quantity }} {{ item.get_unit_display }}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -97,7 +97,7 @@
                   <td data-label="Tipo">{{ movement.get_movement_type_display }}</td>
                   <td data-label="Origem">{{ movement.from_location|default:"—" }}</td>
                   <td data-label="Destino">{{ movement.to_location|default:"—" }}</td>
-                  <td data-label="Quantidade">{{ movement.quantity }} {{ item.unit }}</td>
+                  <td data-label="Quantidade">{{ movement.quantity }} {{ item.get_unit_display }}</td>
                   <td data-label="Estado">{% if movement.is_cancelled %}Cancelado{% else %}Ativo{% endif %}</td>
                 </tr>
               {% endfor %}

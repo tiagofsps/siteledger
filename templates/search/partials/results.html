@@ -68,7 +68,7 @@
             <li>
               <a href="{{ item.get_absolute_url }}">
                 <span class="search-result-title">{{ item.name }}</span>
-                <span class="search-result-meta">{{ item.get_category_display }} · {{ item.unit }}{% if not item.is_active %} · Inativo{% endif %}</span>
+                <span class="search-result-meta">{{ item.get_category_display }} · {{ item.get_unit_display }}{% if not item.is_active %} · Inativo{% endif %}</span>
               </a>
             </li>
           {% endfor %}
@@ -88,7 +88,7 @@
               <a href="{{ movement.get_absolute_url }}">
                 <span class="search-result-title">{{ movement.get_movement_type_display }} · {{ movement.item.name }}</span>
                 <span class="search-result-meta">
-                  {{ movement.movement_date|date:"d/m/Y" }} · {{ movement.quantity }} {{ movement.item.unit }}
+                  {{ movement.movement_date|date:"d/m/Y" }} · {{ movement.quantity }} {{ movement.item.get_unit_display }}
                   · {{ movement.from_location|default:"—" }} → {{ movement.to_location|default:"—" }}
                   {% if movement.is_cancelled %}· Cancelado{% endif %}
                 </span>

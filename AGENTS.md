@@ -42,8 +42,9 @@ In application code, all quantity-changing writes must use `inventory/services.p
 
 - A purchase has a supplier, date, computed total and optional notes; it must contain at least one line.
 - Purchase totals are computed from the lines: each subtotal is rounded to cents with `ROUND_HALF_UP`, then summed. The total is never entered manually.
-- Purchase lines snapshot description and unit; the catalogue item is optional and the unit price is required. Unit conversion is out of scope.
-- Items have one reference unit. The catalogue is shared by materials, equipment and reusable materials.
+- Purchase lines require a catalogue item and snapshot its name and unit; the unit price is required. Unit conversion is out of scope.
+- Items have one reference unit from a fixed enumeration (`un`, `cx`, `sc`, `pl`, `rl`, `pct`, `md`, `m`, `m2`, `m3`, `kg`, `t`, `l`). The catalogue is shared by materials, equipment and reusable materials.
+- Piece-counted units (`un`, `cx`, `sc`, `pl`, `rl`, `pct`, `md`) reject fractional quantities; the remaining units accept up to three decimals.
 - One logical warehouse exists; each project has exactly one project location, created through the domain service.
 - A purchase may be saved partially or entirely unreceived. A receipt creates an `INITIAL_ENTRY` linked to the purchase line.
 - Active receipts cannot exceed the purchase line quantity. A line quantity cannot be reduced below the quantity already received.

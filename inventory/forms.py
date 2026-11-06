@@ -1,10 +1,12 @@
 from decimal import Decimal
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
 from .models import Item, Location, StockMovement
+from .units import validate_quantity
 
 POSITIVE_QUANTITY = Decimal("0.001")
 
@@ -41,6 +43,19 @@ class ItemForm(forms.ModelForm):
         }
 
 
+class QuickItemForm(forms.ModelForm):
+    """Minimal item creation used from the purchase line form."""
+
+    class Meta:
+        model = Item
+        fields = ["name", "category", "unit"]
+        labels = {
+            "name": "Nome",
+            "category": "Categoria",
+            "unit": "Unidade",
+        }
+
+
 class MovementFormMixin:
     def _configure_choices(self, *, items=None, locations=None):
         self.fields["item"].queryset = items or active_items()
@@ -48,6 +63,17 @@ class MovementFormMixin:
             self.fields["to_location"].queryset = locations or incoming_locations()
         if "from_location" in self.fields:
             self.fields["from_location"].queryset = locations or outgoing_locations()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        item = cleaned_data.get("item")
+        quantity = cleaned_data.get("quantity")
+        if item is not None and quantity is not None:
+            try:
+                validate_quantity(item.unit, quantity)
+            except ValidationError as error:
+                self.add_error("quantity", error)
+        return cleaned_data
 
 
 class InitialEntryForm(MovementFormMixin, forms.Form):

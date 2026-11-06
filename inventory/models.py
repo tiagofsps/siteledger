@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
+from .units import Unit
+
 
 class Item(models.Model):
     class Category(models.TextChoices):
@@ -11,7 +13,11 @@ class Item(models.Model):
 
     name = models.CharField("nome", max_length=200)
     category = models.CharField("categoria", max_length=30, choices=Category.choices)
-    unit = models.CharField("unidade de referência", max_length=30)
+    unit = models.CharField(
+        "unidade de referência",
+        max_length=8,
+        choices=Unit.choices,
+    )
     description = models.TextField("descrição", blank=True)
     is_active = models.BooleanField("ativo", default=True)
     created_at = models.DateTimeField("criado em", auto_now_add=True)
@@ -21,9 +27,15 @@ class Item(models.Model):
         ordering = ["name"]
         verbose_name = "artigo"
         verbose_name_plural = "artigos"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(unit__in=Unit.values),
+                name="item_unit_valid",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.name} ({self.unit})"
+        return f"{self.name} ({self.get_unit_display()})"
 
     def get_absolute_url(self):
         return reverse("inventory:item_detail", kwargs={"pk": self.pk})
@@ -202,7 +214,7 @@ class StockMovement(models.Model):
     def __str__(self):
         return (
             f"{self.get_movement_type_display()} - "
-            f"{self.item.name} - {self.quantity} {self.item.unit}"
+            f"{self.item.name} - {self.quantity} {self.item.get_unit_display()}"
         )
 
     @property

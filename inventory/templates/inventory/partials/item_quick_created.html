@@ -1,0 +1,7 @@
+<option value="{{ item.pk }}" selected hx-swap-oob="beforeend:#id_{{ prefix }}-item">{{ item.name }} ({{ item.get_unit_display }})</option>
+<p
+  id="{{ prefix }}-quick-status"
+  class="help-text quick-item-created"
+  role="status"
+  hx-swap-oob="outerHTML:#{{ prefix }}-quick-status"
+>“{{ item.name }}” foi criado e selecionado nesta linha.</p>

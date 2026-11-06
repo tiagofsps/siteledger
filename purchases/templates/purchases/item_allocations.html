@@ -15,7 +15,7 @@
     <div>
       <h1>{{ item.description }}</h1>
       <p class="page-subtitle">
-        {{ purchase.supplier.name }} · {{ item.quantity|floatformat:3 }} {{ item.unit }} nesta compra
+        {{ purchase.supplier.name }} · {{ item.quantity|floatformat:3 }} {{ item.get_unit_display }} nesta compra
       </p>
     </div>
   </div>
@@ -25,11 +25,11 @@
     <dl class="detail-list">
       <div>
         <dt>Quantidade recebida</dt>
-        <dd>{{ active_allocated|floatformat:3 }} {{ item.unit }}</dd>
+        <dd>{{ active_allocated|floatformat:3 }} {{ item.get_unit_display }}</dd>
       </div>
       <div>
         <dt>Por receber</dt>
-        <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
+        <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.get_unit_display }}</dd>
       </div>
       {% if not item.item_id %}
         <div>
@@ -90,7 +90,7 @@
               <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
                 <td data-label="Data">{{ movement.movement_date|date:"d/m/Y" }}</td>
                 <td data-label="Destino">{{ movement.to_location.name|default:"—" }}</td>
-                <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.unit }}</td>
+                <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.get_unit_display }}</td>
                 <td data-label="Estado">
                   {% if movement.is_cancelled %}
                     <span class="status-badge status-badge--archived">Cancelado</span>

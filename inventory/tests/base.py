@@ -10,7 +10,7 @@ def create_item(
     *,
     name="Cimento",
     category=Item.Category.MATERIAL,
-    unit="saco",
+    unit="sc",
     description="",
     is_active=True,
     **extra,

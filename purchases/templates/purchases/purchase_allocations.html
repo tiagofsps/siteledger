@@ -48,12 +48,12 @@
               <div>
                 <h3>{{ item.description }}</h3>
                 <p class="record-card-meta">
-                  {{ item.quantity|floatformat:3 }} {{ item.unit }}
+                  {{ item.quantity|floatformat:3 }} {{ item.get_unit_display }}
                   {% if item.item_id %}· {{ item.item.name }}{% endif %}
                 </p>
               </div>
               <div class="item-card-total">
-                <strong>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</strong>
+                <strong>{{ item.remaining_quantity|floatformat:3 }} {{ item.get_unit_display }}</strong>
                 <span class="text-muted">por receber</span>
               </div>
             </div>
@@ -61,11 +61,11 @@
             <dl class="obra-meta">
               <div>
                 <dt>Recebido</dt>
-                <dd>{{ item.active_allocated|floatformat:3 }} {{ item.unit }}</dd>
+                <dd>{{ item.active_allocated|floatformat:3 }} {{ item.get_unit_display }}</dd>
               </div>
               <div>
                 <dt>Por receber</dt>
-                <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.unit }}</dd>
+                <dd>{{ item.remaining_quantity|floatformat:3 }} {{ item.get_unit_display }}</dd>
               </div>
             </dl>
 
@@ -91,11 +91,6 @@
                   <a class="button button--secondary" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Ver receções</a>
                 </div>
               </form>
-            {% elif not item.item_id %}
-              <p class="notice">
-                Associe um artigo do catálogo a esta linha para poder receber quantidades.
-                <a href="{% url 'purchases:purchase_update' purchase.pk %}">Editar compra</a>
-              </p>
             {% elif not item.item.is_active %}
               <p class="notice">
                 O artigo do catálogo está inativo.

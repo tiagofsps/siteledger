@@ -325,22 +325,7 @@ class PurchaseAllocationServiceTests(TestCase):
                 user=None,
             )
 
-    def test_allocation_requires_catalogue_item_and_matching_unit(self):
-        uncatalogued = PurchaseItem.objects.create(
-            purchase=self.purchase,
-            description="Sem catálogo",
-            unit="un",
-            quantity=Decimal("1"),
-        )
-        with self.assertRaises(ValidationError):
-            allocate_purchase_item(
-                purchase_item=uncatalogued,
-                location=self.warehouse,
-                quantity=Decimal("1"),
-                movement_date=date(2026, 1, 10),
-                user=None,
-            )
-
+    def test_allocation_requires_matching_unit(self):
         self.purchase_item.unit = "kg"
         self.purchase_item.save(update_fields=["unit"])
         with self.assertRaises(ValidationError):
@@ -351,3 +336,36 @@ class PurchaseAllocationServiceTests(TestCase):
                 movement_date=date(2026, 1, 10),
                 user=None,
             )
+
+
+class QuantityPrecisionServiceTests(TestCase):
+    def test_initial_entry_rejects_fractional_discrete_quantity(self):
+        item = create_item(name="Tijolo", unit="un")
+
+        with self.assertRaises(ValidationError):
+            create_initial_entry(
+                item=item,
+                location=warehouse(),
+                quantity=Decimal("1.500"),
+            )
+
+        self.assertFalse(StockMovement.objects.filter(item=item).exists())
+
+    def test_transfer_accepts_fractional_continuous_quantity(self):
+        item = create_item(name="Areia", unit="m3")
+        create_initial_entry(
+            item=item,
+            location=warehouse(),
+            quantity=Decimal("2.000"),
+        )
+
+        movement = create_transfer(
+            item=item,
+            from_location=warehouse(),
+            to_location=project_location(),
+            quantity=Decimal("1.500"),
+            movement_date=date(2026, 1, 21),
+            user=None,
+        )
+
+        self.assertEqual(movement.quantity, Decimal("1.500"))

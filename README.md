@@ -19,8 +19,8 @@ Recorded balances are theoretical quantities derived from active movements. They
 - `Project`: construction project with a name, address, optional description, start date, status and archive timestamp.
 - `Supplier`: shop or supplier with a case-insensitively unique name and an active flag.
 - `Purchase`: supplier, purchase date, computed total and optional notes.
-- `PurchaseItem`: purchase line with an optional catalogue item, snapshot description, snapshot unit, positive quantity and optional unit price.
-- `Item`: shared catalogue of materials, equipment and reusable materials, with one reference unit.
+- `PurchaseItem`: purchase line with a mandatory catalogue item, snapshot description, snapshot unit, positive quantity and unit price.
+- `Item`: shared catalogue of materials, equipment and reusable materials, with one reference unit from a fixed enumeration (`un`, `cx`, `sc`, `pl`, `rl`, `pct`, `md`, `m`, `m2`, `m3`, `kg`, `t`, `l`).
 - `Location`: one logical warehouse and one location per project.
 - `StockMovement`: append-only quantity change with an item, optional source and destination locations, optional purchase line, positive quantity, type, date, notes, creation user and cancellation fields.
 
@@ -36,11 +36,12 @@ Movement types:
 - A purchase must contain at least one item.
 - Purchase totals are computed from the line subtotals.
 - Item subtotals use `ROUND_HALF_UP` and the unit price is required.
-- A purchase and its lines may be saved partially or entirely unallocated.
-- After saving a purchase, quantities can be allocated immediately from the purchase allocation page, or later from the purchase record.
-- Each allocation creates an `INITIAL_ENTRY` movement linked to the purchase line.
-- Active allocations cannot exceed the purchase line quantity.
-- Purchase line quantities cannot be reduced below their active allocated quantity.
+- A purchase and its lines may be saved partially or entirely unreceived.
+- After saving a purchase, quantities can be received immediately from the purchase receipt page, or later from the purchase record.
+- Each receipt creates an `INITIAL_ENTRY` movement linked to the purchase line.
+- Active receipts cannot exceed the purchase line quantity.
+- Purchase line quantities cannot be reduced below the quantity already received.
+- Piece-counted units only accept whole quantities; the others accept up to three decimals.
 - Movement quantities are always positive; direction is represented by source and destination.
 - Transfers and negative adjustments cannot make a source location's recorded balance negative.
 - Completed movements are not edited. Corrections use full cancellation and a replacement movement.
