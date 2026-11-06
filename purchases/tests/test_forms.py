@@ -31,7 +31,7 @@ class PurchaseItemFormTests(TestCase):
                 "description": "",
                 "unit": "",
                 "quantity": "2.000",
-                "unit_price": "",
+                "unit_price": "10.00",
             }
         )
         self.assertTrue(form.is_valid(), form.errors)
@@ -45,7 +45,7 @@ class PurchaseItemFormTests(TestCase):
                 "description": "",
                 "unit": "",
                 "quantity": "2.000",
-                "unit_price": "",
+                "unit_price": "10.00",
             }
         )
         self.assertFalse(form.is_valid())
@@ -59,7 +59,7 @@ class PurchaseItemFormTests(TestCase):
                 "description": self.item.name,
                 "unit": "kg",
                 "quantity": "2.000",
-                "unit_price": "",
+                "unit_price": "10.00",
             }
         )
         self.assertFalse(form.is_valid())
@@ -109,3 +109,19 @@ class AllocationFormTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("__all__", form.errors)
+
+
+class UnitPriceRequirementTests(TestCase):
+    def test_unit_price_is_required(self):
+        item = create_item()
+        form = PurchaseItemForm(
+            data={
+                "item": item.pk,
+                "description": "",
+                "unit": "",
+                "quantity": "2.000",
+                "unit_price": "",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("unit_price", form.errors)

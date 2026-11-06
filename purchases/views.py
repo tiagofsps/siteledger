@@ -23,6 +23,7 @@ from .forms import (
 )
 from .formsets import PurchaseItemFormSet
 from .models import Purchase, PurchaseItem, Supplier
+from .services import recalculate_purchase_total
 
 
 def _purchase_wizard_step(form, formset):
@@ -259,9 +260,12 @@ def purchase_create(request):
         )
         if form.is_valid() and formset.is_valid():
             with transaction.atomic():
-                purchase = form.save()
+                purchase = form.save(commit=False)
+                purchase.total = Decimal("0.00")
+                purchase.save()
                 formset.instance = purchase
                 formset.save()
+                recalculate_purchase_total(purchase)
             messages.success(request, "A compra foi registada.")
             can_allocate = (
                 request.user.has_perm("purchases.change_purchase")
@@ -310,6 +314,7 @@ def purchase_update(request, pk):
             if form.is_valid() and formset.is_valid():
                 purchase = form.save()
                 formset.save()
+                recalculate_purchase_total(purchase)
                 messages.success(request, "A compra foi atualizada.")
                 return redirect(purchase.get_absolute_url())
             wizard_initial_step = _purchase_wizard_step(form, formset)
@@ -369,7 +374,7 @@ def purchase_allocations(request, pk):
         try:
             item_pk = int(request.POST.get("item_pk", ""))
         except (TypeError, ValueError):
-            return HttpResponseBadRequest("Artigo inválido.")
+            return HttpResponseBadRequest("Linha inválida.")
 
         submitted_item = get_object_or_404(
             PurchaseItem.objects.select_related("purchase", "item"),
@@ -394,7 +399,7 @@ def purchase_allocations(request, pk):
             except ValidationError as error:
                 submitted_form.add_error(None, error.messages)
             else:
-                messages.success(request, "A alocação foi registada.")
+                messages.success(request, "A receção foi registada.")
                 return redirect(
                     "purchases:purchase_allocations",
                     pk=purchase.pk,
@@ -446,7 +451,7 @@ def item_allocations(request, purchase_pk, item_pk):
                 except ValidationError as error:
                     form.add_error(None, error.messages)
                 else:
-                    messages.success(request, "A alocação foi registada.")
+                    messages.success(request, "A receção foi registada.")
                     return redirect(
                         "purchases:item_allocations",
                         purchase_pk=item.purchase_id,
@@ -487,10 +492,10 @@ def purchase_item_row(request):
     try:
         total = max(1, int(raw_total))
     except (TypeError, ValueError):
-        return HttpResponseBadRequest("Número de artigos inválido.")
+        return HttpResponseBadRequest("Número de linhas inválido.")
 
     if total >= 50:
-        return HttpResponseBadRequest("Máximo de 50 artigos por compra.")
+        return HttpResponseBadRequest("Máximo de 50 linhas por compra.")
 
     formset = PurchaseItemFormSet(instance=Purchase(), prefix="items")
     form = formset.empty_form

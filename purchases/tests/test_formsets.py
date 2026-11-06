@@ -33,7 +33,7 @@ class PurchaseItemFormSetTests(TestCase):
         )
         formset = PurchaseItemFormSet(data, instance=purchase, prefix="items")
         self.assertFalse(formset.is_valid())
-        self.assertIn("pelo menos um artigo", " ".join(formset.non_form_errors()))
+        self.assertIn("pelo menos uma linha", " ".join(formset.non_form_errors()))
 
     def test_item_with_movements_cannot_be_deleted(self):
         item = create_item()
@@ -61,7 +61,7 @@ class PurchaseItemFormSetTests(TestCase):
                 "items-0-description": item.name,
                 "items-0-unit": item.unit,
                 "items-0-quantity": "5.000",
-                "items-0-unit_price": "",
+                "items-0-unit_price": "10.00",
                 "items-0-DELETE": "on",
             }
         )
@@ -95,7 +95,7 @@ class PurchaseItemFormSetTests(TestCase):
                 "items-0-description": item.name,
                 "items-0-unit": item.unit,
                 "items-0-quantity": "2.000",
-                "items-0-unit_price": "",
+                "items-0-unit_price": "10.00",
             }
         )
         formset = PurchaseItemFormSet(data, instance=purchase, prefix="items")

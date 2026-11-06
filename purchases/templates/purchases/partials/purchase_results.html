@@ -6,7 +6,7 @@
         <tr>
           <th scope="col">Data</th>
           <th scope="col">Fornecedor</th>
-          <th scope="col">Artigos</th>
+          <th scope="col">Linhas</th>
           <th scope="col">Total</th>
         </tr>
       </thead>
@@ -15,7 +15,7 @@
           <tr>
             <td data-label="Data"><a href="{{ purchase.get_absolute_url }}">{{ purchase.purchase_date|date:"d/m/Y" }}</a></td>
             <td data-label="Fornecedor">{{ purchase.supplier.name }}</td>
-            <td data-label="Artigos">{{ purchase.item_count }}</td>
+            <td data-label="Linhas">{{ purchase.item_count }}</td>
             <td data-label="Total">{{ purchase.total|floatformat:2 }} €</td>
           </tr>
         {% endfor %}

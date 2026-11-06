@@ -1,4 +1,4 @@
-<div class="purchase-item-row">
+<div class="purchase-item-row" data-purchase-line>
   {{ form.id }}
   {{ form.purchase }}
   <div class="field-grid">
@@ -27,9 +27,13 @@
       {{ form.unit_price }}
       {{ form.unit_price.errors }}
     </div>
+    <div class="form-field form-field--subtotal">
+      <span class="form-label">Subtotal</span>
+      <output class="line-subtotal" data-line-subtotal>—</output>
+    </div>
   </div>
   {% if form.DELETE %}
-    <label class="checkbox-field">{{ form.DELETE }} Remover artigo</label>
+    <label class="checkbox-field">{{ form.DELETE }} Remover linha</label>
   {% endif %}
 </div>
 {% if total_forms %}

@@ -23,7 +23,7 @@ class HelpViewTests(TestCase):
         self.assertTemplateUsed(response, "help.html")
         self.assertContains(response, "Como funciona o sistema")
         self.assertContains(response, "Fluxo rápido")
-        self.assertContains(response, "Alocação de compras")
+        self.assertContains(response, "Receções de compras")
         self.assertContains(response, "Movimentos")
         self.assertContains(response, "Saldos registados")
         self.assertContains(response, "Erros comuns")

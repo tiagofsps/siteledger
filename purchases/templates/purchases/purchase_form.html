@@ -20,6 +20,7 @@
     method="post"
     novalidate
     data-wizard
+    data-purchase-totals
     data-initial-step="{{ wizard_initial_step|default:1 }}"
     data-current-step="{{ wizard_initial_step|default:1 }}"
   >
@@ -27,9 +28,9 @@
     {{ form.non_field_errors }}
 
     {% if purchase %}
-      {% include "partials/form_progress.html" with step1="Dados" step2="Artigos" current_step=wizard_initial_step|default:1 %}
+      {% include "partials/form_progress.html" with step1="Dados" step2="Linhas" current_step=wizard_initial_step|default:1 %}
     {% else %}
-      {% include "partials/form_progress.html" with step1="Dados" step2="Artigos" step3="Alocação" current_step=wizard_initial_step|default:1 %}
+      {% include "partials/form_progress.html" with step1="Dados" step2="Linhas" step3="Receção" current_step=wizard_initial_step|default:1 %}
     {% endif %}
 
     <section class="wizard-step" data-step="1">
@@ -44,11 +45,6 @@
           {{ form.purchase_date }}
           {{ form.purchase_date.errors }}
         </div>
-        <div class="form-field{% if form.total.errors %} form-field--error{% endif %}">
-          {{ form.total.label_tag }}
-          {{ form.total }}
-          {{ form.total.errors }}
-        </div>
       </div>
 
       <div class="form-field{% if form.notes.errors %} form-field--error{% endif %}">
@@ -60,7 +56,7 @@
 
     <section class="wizard-step" data-step="2">
       <fieldset class="formset">
-        <legend>Artigos</legend>
+        <legend>Linhas da compra</legend>
         {{ formset.non_form_errors }}
         {{ formset.management_form }}
 
@@ -77,9 +73,15 @@
           hx-include="#id_items-TOTAL_FORMS"
           hx-target="#items-formset"
           hx-swap="beforeend"
-        >Adicionar artigo</button>
-        <p class="help-text">Máximo de 50 artigos por compra.</p>
+        >Adicionar linha</button>
+        <p class="help-text">Máximo de 50 linhas por compra.</p>
       </fieldset>
+
+      <div class="purchase-total-preview" aria-live="polite">
+        <span class="purchase-total-preview-label">Total da compra</span>
+        <strong class="purchase-total-preview-value" data-purchase-total>—</strong>
+        <span class="help-text">Calculado a partir das linhas: quantidade × preço unitário.</span>
+      </div>
     </section>
 
     <datalist id="unit-options">

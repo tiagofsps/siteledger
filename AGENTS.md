@@ -40,17 +40,17 @@ In application code, all quantity-changing writes must use `inventory/services.p
 
 ## Business rules
 
-- A purchase has a supplier, date, independent total and optional notes; it must contain at least one line.
-- Purchase totals are independent from line subtotals. Line subtotals are shown only when a unit price exists.
-- Purchase lines snapshot description and unit; the catalogue item and unit price are optional. Unit conversion is out of scope.
+- A purchase has a supplier, date, computed total and optional notes; it must contain at least one line.
+- Purchase totals are computed from the lines: each subtotal is rounded to cents with `ROUND_HALF_UP`, then summed. The total is never entered manually.
+- Purchase lines snapshot description and unit; the catalogue item is optional and the unit price is required. Unit conversion is out of scope.
 - Items have one reference unit. The catalogue is shared by materials, equipment and reusable materials.
 - One logical warehouse exists; each project has exactly one project location, created through the domain service.
-- A purchase may be saved partially or entirely unallocated. Allocation creates an `INITIAL_ENTRY` linked to the purchase line.
-- Active allocation cannot exceed the purchase line quantity. A line quantity cannot be reduced below its active allocation.
+- A purchase may be saved partially or entirely unreceived. A receipt creates an `INITIAL_ENTRY` linked to the purchase line.
+- Active receipts cannot exceed the purchase line quantity. A line quantity cannot be reduced below the quantity already received.
 - Purchase lines with movements cannot be deleted.
 - Movement types: `INITIAL_ENTRY`, `TRANSFER`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`. Quantities are always positive.
 - Transfers require two different locations. Adjustments require a mandatory justification.
-- Movement item and unit must match the linked purchase line when one exists. Allocation requires a catalogue item and matching unit.
+- Movement item and unit must match the linked purchase line when one exists. A receipt requires a catalogue item and matching unit.
 - Movement history is append-only. Corrections use full cancellation and a replacement movement.
 - Cancellation records user, timestamp and reason. Cancelled movements remain visible but are excluded from balances.
 - Transfers and negative adjustments cannot make a source balance negative; cancellation cannot make an affected balance negative.

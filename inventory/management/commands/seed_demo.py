@@ -21,6 +21,7 @@ from inventory.services import (
 )
 from projects.models import Project
 from purchases.models import Purchase, PurchaseItem, Supplier
+from purchases.services import recalculate_purchase_total
 
 DEMO_NAME_PREFIX = "Demo · "
 DEMO_NOTE_PREFIX = "[demo]"
@@ -256,6 +257,7 @@ class Command(BaseCommand):
                 description=items["andaime"].name,
                 unit=items["andaime"].unit,
                 quantity=Decimal("10.000"),
+                unit_price=Decimal("12.50"),
             ),
             "free_text": self._seed_purchase_line(
                 tools,
@@ -263,8 +265,12 @@ class Command(BaseCommand):
                 description="Material avulso (demo)",
                 unit="un",
                 quantity=Decimal("2.000"),
+                unit_price=Decimal("8.00"),
             ),
         }
+
+        recalculate_purchase_total(materials)
+        recalculate_purchase_total(tools)
 
         return {
             "materials": materials,
