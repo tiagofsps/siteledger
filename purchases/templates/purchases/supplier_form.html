@@ -20,11 +20,7 @@
     {{ form.non_field_errors }}
 
     {% for field in form %}
-      <div class="form-field{% if field.errors %} form-field--error{% endif %}">
-        {{ field.label_tag }}
-        {{ field }}
-        {{ field.errors }}
-      </div>
+      {% include "partials/form_field.html" with field=field %}
     {% endfor %}
 
     <div class="form-actions">

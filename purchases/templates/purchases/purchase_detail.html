@@ -21,7 +21,7 @@
     {% endif %}
   </div>
 
-  <section class="detail-panel" aria-labelledby="purchase-summary">
+  <section class="card" aria-labelledby="purchase-summary">
     <h2 id="purchase-summary" class="visually-hidden">Resumo da compra</h2>
     <dl class="detail-list">
       <div>
@@ -51,18 +51,18 @@
     {% if items %}
       <div class="item-list">
         {% for item in items %}
-          <article class="item-card">
-            <div class="item-card-header">
+          <article class="card">
+            <div class="card-header">
               <div>
                 <h3>{{ item.description }}</h3>
-                <p class="record-card-meta">
+                <p class="card-meta">
                   {{ item.quantity|floatformat:3 }} {{ item.get_unit_display }}
                   {% if item.unit_price is not None %}
                     × {{ item.unit_price|floatformat:2 }} €
                   {% endif %}
                 </p>
               </div>
-              <div class="item-card-total">
+              <div class="card-total">
                 {% if item.subtotal is not None %}
                   <strong>{{ item.subtotal|floatformat:2 }} €</strong>
                 {% else %}
@@ -71,7 +71,7 @@
               </div>
             </div>
 
-            <dl class="obra-meta">
+            <dl class="meta-grid">
               <div>
                 <dt>Recebido</dt>
                 <dd>{{ item.active_received|default_if_none:0|floatformat:3 }} {{ item.get_unit_display }}</dd>

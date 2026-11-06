@@ -625,3 +625,27 @@ class PurchaseAdminTests(TestCase):
         for model in (Supplier, Purchase, PurchaseItem):
             with self.subTest(model=model.__name__):
                 self.assertNotIn(model, admin.site._registry)
+
+
+class ReceiptMarkupTests(TestCase):
+    def setUp(self):
+        self.user = create_user("receipt-manager", permissions=PURCHASE_PERMISSIONS)
+        self.client.force_login(self.user)
+        self.supplier = create_supplier()
+        self.item = create_item()
+        self.purchase = create_purchase(supplier=self.supplier)
+        create_purchase_item(purchase=self.purchase, item=self.item, quantity=Decimal("2"))
+
+    def test_purchase_detail_uses_shared_card_and_meta_markup(self):
+        response = self.client.get(self.purchase.get_absolute_url())
+
+        self.assertContains(response, 'class="card"')
+        self.assertContains(response, 'class="card-header"')
+        self.assertContains(response, "meta-grid")
+
+    def test_supplier_form_renders_switch_control(self):
+        response = self.client.get(reverse("purchases:supplier_create"))
+
+        self.assertContains(response, 'class="switch"')
+        self.assertContains(response, "switch-track")
+        self.assertContains(response, 'type="checkbox"')
