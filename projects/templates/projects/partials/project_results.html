@@ -1,17 +1,17 @@
 {% if projects %}
-  <div class="record-grid">
+  <div class="card-grid">
     {% for project in projects %}
-      <article class="record-card">
-        <div class="record-card-header">
+      <article class="card">
+        <div class="card-header">
           <div>
-            <h2 class="record-card-title">
+            <h2 class="card-title">
               <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
             </h2>
-            <p class="record-card-meta">{{ project.address|default:"Sem morada" }}</p>
+            <p class="card-meta">{{ project.address|default:"Sem morada" }}</p>
           </div>
           {% include "projects/partials/project_status_badge.html" with project=project %}
         </div>
-        <dl class="record-card-details">
+        <dl class="meta-grid">
           <div>
             <dt>Início</dt>
             <dd>{{ project.start_date|date:"d/m/Y"|default:"—" }}</dd>

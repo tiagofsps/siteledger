@@ -36,6 +36,20 @@
   --radius-control: 0.75rem;
   --radius-card: 1rem;
   --radius-pill: 999px;
+
+  /* Spacing and type scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.15rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --line-height: 1.5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -737,74 +751,90 @@ textarea:focus-visible {
   padding: 0;
 }
 
-.record-grid {
+.card-grid {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 }
 
-.obra-card,
-.record-card,
-.item-card,
-.detail-panel,
+.card,
 .form-card,
 .confirmation-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  padding: 1rem;
-  transition: border-color 0.15s ease, background-color 0.2s ease;
+  min-width: 0;
+  padding: var(--space-4);
 }
 
-.obra-card:hover,
-.record-card:hover,
-.item-card:hover {
-  border-color: var(--color-border-hover);
+.card-header {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  justify-content: space-between;
+  min-width: 0;
 }
 
-.obra-card-title,
-.record-card-title {
-  font-size: 1.1rem;
+.card-header > * {
+  min-width: 0;
+}
+
+.card-title {
+  font-size: var(--text-lg);
   line-height: 1.3;
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1);
+  overflow-wrap: anywhere;
 }
 
-.obra-card-title a,
-.record-card-title a {
+.card-title a {
   color: var(--color-text);
   text-decoration: none;
 }
 
-.obra-card-title a:hover,
-.record-card-title a:hover {
+.card-title a:hover {
   color: var(--color-accent);
   text-decoration: underline;
 }
 
-.obra-card-address,
-.record-card-meta {
+.card-meta {
   color: var(--color-muted);
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-3);
+  overflow-wrap: anywhere;
 }
 
-.obra-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
+.card-total {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.card-actions {
+  margin-top: var(--space-3);
+}
+
+.meta-grid {
+  display: grid;
+  gap: var(--space-2) var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   margin: 0;
 }
 
-.obra-meta div {
+.meta-grid > div {
   display: flex;
-  gap: 0.35rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
 }
 
-.obra-meta dt {
+.meta-grid dt {
   color: var(--color-muted);
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
-.obra-meta dd {
+.meta-grid dd {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Badges */
@@ -905,7 +935,8 @@ textarea:focus-visible {
 /* Details & Records */
 .detail-list {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
   margin: 0;
 }
 
@@ -1052,6 +1083,71 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.form-field--switch {
+  margin-bottom: 1rem;
+}
+
+.switch {
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0;
+}
+
+.switch input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.switch-track {
+  background: var(--color-border-hover);
+  border-radius: var(--radius-pill);
+  flex: none;
+  height: 1.5rem;
+  position: relative;
+  transition: background-color 0.2s ease;
+  width: 2.75rem;
+}
+
+.switch-track::after {
+  background: var(--color-surface);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  content: "";
+  height: 1.125rem;
+  left: 0.1875rem;
+  position: absolute;
+  top: 0.1875rem;
+  transition: transform 0.2s ease;
+  width: 1.125rem;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--color-accent);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(1.25rem);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.5;
+}
+
+.switch-label {
+  font-weight: 600;
+}
+
 .form-field--subtotal {
   align-self: end;
 }
@@ -1132,6 +1228,7 @@ textarea:focus-visible {
 
 .data-table th,
 .data-table td {
+  overflow-wrap: anywhere;
   border-bottom: 1px solid var(--color-border);
   padding: 0.55rem 0.5rem;
   text-align: left;
@@ -1141,6 +1238,14 @@ textarea:focus-visible {
 .data-table th {
   color: var(--color-muted);
   font-size: 0.9rem;
+}
+
+.data-table td[data-label="Quantidade"],
+.data-table td[data-label="Total"],
+.data-table td[data-label="Preço"],
+.meta-grid dd,
+.detail-list dd {
+  font-variant-numeric: tabular-nums;
 }
 
 .data-table a {
@@ -1162,25 +1267,6 @@ textarea:focus-visible {
   color: var(--color-muted);
 }
 
-.item-card-header {
-  align-items: flex-start;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  justify-content: space-between;
-}
-
-.item-card-header h3 {
-  margin: 0 0 0.25rem;
-}
-
-.item-card-total {
-  white-space: nowrap;
-}
-
-.item-card-actions {
-  margin-top: 0.75rem;
-}
 
 @media (min-width: 48rem) {
   .filters {
@@ -1207,14 +1293,6 @@ textarea:focus-visible {
     grid-template-columns: minmax(12rem, 2fr) repeat(3, minmax(8rem, 1fr)) auto;
   }
 
-  .obra-list,
-  .record-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .detail-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   .field-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

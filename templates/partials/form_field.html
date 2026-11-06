@@ -1,0 +1,22 @@
+{% if field.field.widget.input_type == "checkbox" %}
+  <div class="form-field--switch{% if field.errors %} form-field--error{% endif %}">
+    <label class="switch">
+      {{ field }}
+      <span class="switch-track" aria-hidden="true"></span>
+      <span class="switch-label">{{ field.label }}</span>
+    </label>
+    {% if field.help_text %}
+      <p class="help-text">{{ field.help_text }}</p>
+    {% endif %}
+    {{ field.errors }}
+  </div>
+{% else %}
+  <div class="form-field{% if field.errors %} form-field--error{% endif %}">
+    {{ field.label_tag }}
+    {{ field }}
+    {% if field.help_text %}
+      <p class="help-text">{{ field.help_text }}</p>
+    {% endif %}
+    {{ field.errors }}
+  </div>
+{% endif %}
