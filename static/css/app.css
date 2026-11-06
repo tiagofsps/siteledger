@@ -19,6 +19,9 @@
   --color-danger: #dc2626;
   --color-danger-hover: #b91c1c;
   --color-danger-active: #991b1b;
+  --color-danger-strong: #dc2626;
+  --color-danger-strong-hover: #b91c1c;
+  --color-danger-strong-active: #991b1b;
   --color-danger-soft: #fef2f2;
   --color-danger-text: #991b1b;
 
@@ -72,6 +75,9 @@
     --color-danger: #f87171;
     --color-danger-hover: #fca5a5;
     --color-danger-active: #fecaca;
+    --color-danger-strong: #dc2626;
+    --color-danger-strong-hover: #ef4444;
+    --color-danger-strong-active: #b91c1c;
     --color-danger-soft: #371717;
     --color-danger-text: #fca5a5;
 
@@ -106,6 +112,9 @@
   --color-danger: #f87171;
   --color-danger-hover: #fca5a5;
   --color-danger-active: #fecaca;
+  --color-danger-strong: #dc2626;
+  --color-danger-strong-hover: #ef4444;
+  --color-danger-strong-active: #b91c1c;
   --color-danger-soft: #371717;
   --color-danger-text: #fca5a5;
 
@@ -139,6 +148,9 @@
   --color-danger: #dc2626;
   --color-danger-hover: #b91c1c;
   --color-danger-active: #991b1b;
+  --color-danger-strong: #dc2626;
+  --color-danger-strong-hover: #b91c1c;
+  --color-danger-strong-active: #991b1b;
   --color-danger-soft: #fef2f2;
   --color-danger-text: #991b1b;
 }
@@ -649,20 +661,20 @@ textarea:focus-visible {
 }
 
 .button--danger {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
+  background: var(--color-danger-strong);
+  border-color: var(--color-danger-strong);
   color: #ffffff;
 }
 
 .button--danger:hover {
-  background: var(--color-danger-hover);
-  border-color: var(--color-danger-hover);
+  background: var(--color-danger-strong-hover);
+  border-color: var(--color-danger-strong-hover);
   color: #ffffff;
 }
 
 .button--danger:active {
-  background: var(--color-danger-active);
-  border-color: var(--color-danger-active);
+  background: var(--color-danger-strong-active);
+  border-color: var(--color-danger-strong-active);
 }
 
 .data-table a.button,
