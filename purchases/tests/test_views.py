@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from django.contrib import admin
@@ -90,10 +91,7 @@ class PurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         purchase = Purchase.objects.get()
-        self.assertEqual(
-            response["Location"],
-            reverse("purchases:purchase_allocations", args=[purchase.pk]),
-        )
+        self.assertEqual(response["Location"], purchase.get_absolute_url())
         purchase_item = purchase.items.get()
         self.assertEqual(purchase_item.description, self.item.name)
         self.assertEqual(purchase_item.unit, self.item.unit)
@@ -172,7 +170,7 @@ class PurchaseViewTests(TestCase):
         self.assertContains(response, "form-progress")
         self.assertContains(response, ">Dados<")
         self.assertContains(response, ">Linhas<")
-        self.assertContains(response, ">Receção<")
+        self.assertNotContains(response, ">Receção<")
 
     def test_create_form_uses_catalogue_items_only(self):
         response = self.client.get(reverse("purchases:purchase_create"))
@@ -197,7 +195,7 @@ class PurchaseViewTests(TestCase):
         self.assertContains(response, "Este campo é obrigatório.")
         self.assertFalse(Purchase.objects.exists())
 
-    def test_create_without_allocation_permissions_redirects_to_detail(self):
+    def test_create_without_location_permission_redirects_to_detail(self):
         self.client.force_login(
             create_user(
                 "purchase-creator",
@@ -238,7 +236,7 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Purchase.objects.count(), 1)
 
-    def test_update_cannot_reduce_below_allocated_quantity(self):
+    def test_update_cannot_reduce_below_received_quantity(self):
         purchase = create_purchase(supplier=self.supplier)
         purchase_item = create_purchase_item(
             purchase=purchase,
@@ -293,47 +291,47 @@ class PurchaseViewTests(TestCase):
         )
         self.assertContains(response, 'name="items-0-purchase"')
 
-    def test_allocation_creates_movement_and_updates_balance(self):
+    def test_receipt_creates_movement_and_updates_balance(self):
         purchase = create_purchase(supplier=self.supplier)
         purchase_item = create_purchase_item(
             purchase=purchase,
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("5"),
         )
 
         response = self.client.post(
-            reverse(
-                "purchases:item_allocations",
-                args=[purchase.pk, purchase_item.pk],
-            ),
-            {"location": warehouse().pk, "quantity": "2.000"},
+            reverse("purchases:purchase_receive", args=[purchase.pk]),
+            {
+                "item_pk": purchase_item.pk,
+                "location": warehouse().pk,
+                "quantity": "2.000",
+                "movement_date": "2026-01-15",
+            },
         )
         self.assertEqual(response.status_code, 302)
         movement = StockMovement.objects.get(purchase_item=purchase_item)
         self.assertEqual(movement.quantity, Decimal("2.000"))
         self.assertEqual(
-            purchase_item.get_active_allocated_quantity(),
+            purchase_item.get_active_received_quantity(),
             Decimal("2.000"),
         )
 
-    def test_allocation_cannot_exceed_purchase_quantity(self):
+    def test_receipt_cannot_exceed_purchase_quantity(self):
         purchase = create_purchase(supplier=self.supplier)
         purchase_item = create_purchase_item(
             purchase=purchase,
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("2"),
         )
 
         response = self.client.post(
-            reverse(
-                "purchases:item_allocations",
-                args=[purchase.pk, purchase_item.pk],
-            ),
-            {"location": warehouse().pk, "quantity": "3.000"},
+            reverse("purchases:purchase_receive", args=[purchase.pk]),
+            {
+                "item_pk": purchase_item.pk,
+                "location": warehouse().pk,
+                "quantity": "3.000",
+                "movement_date": "2026-01-15",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "excede o que falta receber")
@@ -372,7 +370,7 @@ class PurchaseViewTests(TestCase):
         project = create_project(name="Obra Filtrada")
         location = project_location(project)
         purchase = create_purchase(supplier=self.supplier)
-        allocated_item = create_purchase_item(
+        received_item = create_purchase_item(
             purchase=purchase,
             item=self.item,
             description=self.item.name,
@@ -388,7 +386,7 @@ class PurchaseViewTests(TestCase):
             item=self.item,
             location=location,
             quantity=Decimal("1"),
-            purchase_item=allocated_item,
+            purchase_item=received_item,
         )
 
         response = self.client.get(
@@ -398,22 +396,18 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["purchases"][0].item_count, 2)
 
-    def test_purchase_detail_shows_allocation_action_when_pending(self):
+    def test_purchase_detail_shows_receipt_form_until_received(self):
         purchase = create_purchase(supplier=self.supplier)
         purchase_item = create_purchase_item(
             purchase=purchase,
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("5"),
         )
 
         response = self.client.get(purchase.get_absolute_url())
-        allocation_url = reverse(
-            "purchases:purchase_allocations",
-            args=[purchase.pk],
-        )
-        self.assertContains(response, allocation_url)
+        receive_url = reverse("purchases:purchase_receive", args=[purchase.pk])
+        self.assertContains(response, receive_url)
+        self.assertContains(response, f'name="item_pk" value="{purchase_item.pk}"')
 
         create_initial_entry(
             item=self.item,
@@ -422,7 +416,8 @@ class PurchaseViewTests(TestCase):
             purchase_item=purchase_item,
         )
         response = self.client.get(purchase.get_absolute_url())
-        self.assertNotContains(response, allocation_url)
+        self.assertNotContains(response, receive_url)
+        self.assertContains(response, "totalmente recebida")
 
     def test_permissions_are_required(self):
         self.client.force_login(create_user("viewer"))
@@ -445,9 +440,9 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class PurchaseAllocationViewTests(TestCase):
+class PurchaseReceiptViewTests(TestCase):
     def setUp(self):
-        self.user = create_user("allocation-manager", permissions=PURCHASE_PERMISSIONS)
+        self.user = create_user("receipt-manager", permissions=PURCHASE_PERMISSIONS)
         self.client.force_login(self.user)
         self.supplier = create_supplier()
         self.item = create_item()
@@ -455,84 +450,94 @@ class PurchaseAllocationViewTests(TestCase):
         self.purchase_item = create_purchase_item(
             purchase=self.purchase,
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("5"),
         )
 
-    def allocation_data(self, item, *, location=None, quantity="2.000"):
+    def receipt_data(
+        self,
+        line,
+        *,
+        location=None,
+        quantity="2.000",
+        movement_date="2026-01-15",
+    ):
         return {
-            "item_pk": item.pk,
-            f"allocation-{item.pk}-location": (location or warehouse()).pk,
-            f"allocation-{item.pk}-quantity": quantity,
+            "item_pk": line.pk,
+            "location": (location or warehouse()).pk,
+            "quantity": quantity,
+            "movement_date": movement_date,
         }
 
-    def test_get_shows_pending_line_and_form(self):
-        response = self.client.get(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
-        )
+    def test_detail_shows_pending_line_form(self):
+        response = self.client.get(self.purchase.get_absolute_url())
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.item.name)
-        self.assertContains(response, f"name=\"allocation-{self.purchase_item.pk}-quantity\"")
-        self.assertContains(response, "por receber")
+        self.assertContains(response, 'name="quantity"')
+        self.assertContains(response, 'name="movement_date"')
+        self.assertContains(response, "Por receber")
 
-    def test_post_allocates_and_redirects(self):
+    def test_post_receives_and_redirects(self):
         response = self.client.post(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
-            self.allocation_data(self.purchase_item),
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(self.purchase_item),
         )
+
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            response["Location"],
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
-        )
+        self.assertEqual(response["Location"], self.purchase.get_absolute_url())
         movement = StockMovement.objects.get(purchase_item=self.purchase_item)
         self.assertEqual(movement.quantity, Decimal("2.000"))
+        self.assertEqual(movement.movement_date, date(2026, 1, 15))
         self.assertEqual(
-            self.purchase_item.get_active_allocated_quantity(),
+            self.purchase_item.get_active_received_quantity(),
             Decimal("2.000"),
         )
 
     def test_post_rejects_quantity_above_remaining(self):
         response = self.client.post(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
-            self.allocation_data(self.purchase_item, quantity="6.000"),
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(self.purchase_item, quantity="6.000"),
         )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "excede o que falta receber")
         self.assertFalse(
             StockMovement.objects.filter(purchase_item=self.purchase_item).exists()
         )
 
-    def test_fully_allocated_line_has_no_form(self):
+    def test_post_rejects_fractional_discrete_quantity(self):
+        response = self.client.post(
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(self.purchase_item, quantity="1.500"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "só admite quantidades inteiras")
+        self.assertFalse(
+            StockMovement.objects.filter(purchase_item=self.purchase_item).exists()
+        )
+
+    def test_fully_received_line_has_no_form(self):
         create_initial_entry(
             item=self.item,
             location=warehouse(),
             quantity=Decimal("5"),
             purchase_item=self.purchase_item,
         )
-        response = self.client.get(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
-        )
+        response = self.client.get(self.purchase.get_absolute_url())
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "totalmente recebida")
-        self.assertNotContains(
-            response,
-            f"name=\"allocation-{self.purchase_item.pk}-quantity\"",
-        )
+        self.assertNotContains(response, 'name="quantity"')
 
     def test_inactive_catalogue_item_has_no_form(self):
         self.item.is_active = False
         self.item.save(update_fields=["is_active"])
-        response = self.client.get(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
-        )
+        response = self.client.get(self.purchase.get_absolute_url())
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "está inativo")
-        self.assertNotContains(
-            response,
-            f"name=\"allocation-{self.purchase_item.pk}-quantity\"",
-        )
+        self.assertNotContains(response, 'name="quantity"')
 
     def test_item_from_another_purchase_is_rejected(self):
         other_purchase = create_purchase(
@@ -541,37 +546,47 @@ class PurchaseAllocationViewTests(TestCase):
         other_item = create_purchase_item(
             purchase=other_purchase,
             item=self.item,
-            description=self.item.name,
-            unit=self.item.unit,
             quantity=Decimal("1"),
         )
         response = self.client.post(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
-            self.allocation_data(other_item, quantity="1.000"),
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(other_item, quantity="1.000"),
         )
+
         self.assertEqual(response.status_code, 404)
 
     def test_missing_item_pk_is_rejected(self):
         response = self.client.post(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
             {},
         )
+
         self.assertEqual(response.status_code, 400)
 
-    def test_permissions_are_required(self):
-        self.client.force_login(create_user("allocation-viewer"))
+    def test_get_is_not_allowed(self):
         response = self.client.get(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk])
+            reverse("purchases:purchase_receive", args=[self.purchase.pk])
         )
+
+        self.assertEqual(response.status_code, 405)
+
+    def test_permissions_are_required(self):
+        self.client.force_login(create_user("receipt-viewer"))
+        response = self.client.post(
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(self.purchase_item),
+        )
+
         self.assertEqual(response.status_code, 403)
 
     def test_csrf_is_required(self):
         client = self.client_class(enforce_csrf_checks=True)
         client.force_login(self.user)
         response = client.post(
-            reverse("purchases:purchase_allocations", args=[self.purchase.pk]),
-            self.allocation_data(self.purchase_item),
+            reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+            self.receipt_data(self.purchase_item),
         )
+
         self.assertEqual(response.status_code, 403)
 
 

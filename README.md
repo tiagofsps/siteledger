@@ -6,7 +6,7 @@ The application manages `Project`, `Supplier`, `Purchase`, `PurchaseItem`, `Item
 
 ## Objectives
 
-- Record purchases, purchase lines and their allocation to the warehouse or a project.
+- Record purchases, purchase lines and their receipt into the warehouse or a project.
 - Record transfers, adjustments and returns between locations as independent events.
 - Keep an append-only movement history and derive recorded balances from it.
 - Fit the company's informal way of working with the minimum number of steps.
@@ -194,8 +194,7 @@ Purchases and suppliers:
 - `/purchases/new/`: record a purchase and its items.
 - `/purchases/<id>/`: purchase detail.
 - `/purchases/<id>/edit/`: edit a purchase and its items.
-- `/purchases/<id>/allocations/`: allocate remaining quantities across the purchase lines.
-- `/purchases/<purchase_id>/items/<item_id>/allocations/`: manage allocations for one purchase line.
+- `/purchases/<id>/receive/`: register a receipt for one purchase line (POST from the purchase detail page).
 - `/purchases/suppliers/`: supplier list.
 - `/purchases/suppliers/new/`: create a supplier.
 - `/purchases/suppliers/<id>/edit/`: edit a supplier.
@@ -232,7 +231,7 @@ Location viewing uses `inventory.view_location`.
 
 Movement operations use `inventory.view_stockmovement`, `inventory.add_stockmovement` and `inventory.change_stockmovement`.
 
-Purchase-line allocation requires `purchases.change_purchase` and `inventory.view_location`.
+Purchase-line receipt requires `purchases.change_purchase` and `inventory.view_location`.
 
 Movement cancellation requires `inventory.change_stockmovement`.
 

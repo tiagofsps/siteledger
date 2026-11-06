@@ -152,16 +152,16 @@ def _validate_purchase_item(purchase_item, item):
         )
 
 
-def _validate_allocation_limit(purchase_item, quantity, *, exclude_movement=None):
-    from purchases.services import active_allocated_quantity
+def _validate_receipt_limit(purchase_item, quantity, *, exclude_movement=None):
+    from purchases.services import active_received_quantity
 
-    allocated = active_allocated_quantity(
+    received = active_received_quantity(
         purchase_item,
         exclude_movement=exclude_movement,
     )
-    if allocated + quantity > purchase_item.quantity:
+    if received + quantity > purchase_item.quantity:
         raise ValidationError(
-            "A quantidade alocada excede a quantidade da linha de compra."
+            "A quantidade recebida excede a quantidade da linha de compra."
         )
 
 
@@ -199,7 +199,7 @@ def create_initial_entry(
             .get(pk=purchase_item.pk)
         )
         _validate_purchase_item(purchase_item, item)
-        _validate_allocation_limit(purchase_item, quantity)
+        _validate_receipt_limit(purchase_item, quantity)
 
     return StockMovement.objects.create(
         item=item,
@@ -214,7 +214,7 @@ def create_initial_entry(
 
 
 @transaction.atomic
-def allocate_purchase_item(
+def receive_purchase_item(
     *,
     purchase_item,
     location,

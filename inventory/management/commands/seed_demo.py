@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from inventory.models import Item, StockMovement
 from inventory.services import (
-    allocate_purchase_item,
+    receive_purchase_item,
     cancel_stock_movement,
     create_adjustment_in,
     create_adjustment_out,
@@ -318,8 +318,8 @@ class Command(BaseCommand):
             return f"{DEMO_NOTE_PREFIX} {label}"
 
         self._ensure_movement(
-            marker("alocação cimento Remodelação Centro"),
-            allocate_purchase_item,
+            marker("receção cimento Remodelação Centro"),
+            receive_purchase_item,
             purchase_item=purchase_items["cement"],
             location=remodelacao,
             quantity=Decimal("10.000"),
@@ -327,8 +327,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação cimento armazém"),
-            allocate_purchase_item,
+            marker("receção cimento armazém"),
+            receive_purchase_item,
             purchase_item=purchase_items["cement"],
             location=warehouse,
             quantity=Decimal("5.000"),
@@ -336,8 +336,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação tijolo Remodelação Centro"),
-            allocate_purchase_item,
+            marker("receção tijolo Remodelação Centro"),
+            receive_purchase_item,
             purchase_item=purchase_items["brick"],
             location=remodelacao,
             quantity=Decimal("300.000"),
@@ -345,8 +345,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação tijolo armazém"),
-            allocate_purchase_item,
+            marker("receção tijolo armazém"),
+            receive_purchase_item,
             purchase_item=purchase_items["brick"],
             location=warehouse,
             quantity=Decimal("200.000"),
@@ -354,8 +354,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação areia Moradia Norte"),
-            allocate_purchase_item,
+            marker("receção areia Moradia Norte"),
+            receive_purchase_item,
             purchase_item=purchase_items["sand"],
             location=moradia,
             quantity=Decimal("3.000"),
@@ -363,8 +363,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação betoneira Remodelação Centro"),
-            allocate_purchase_item,
+            marker("receção betoneira Remodelação Centro"),
+            receive_purchase_item,
             purchase_item=purchase_items["mixer"],
             location=remodelacao,
             quantity=Decimal("1.000"),
@@ -372,8 +372,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação andaime Remodelação Centro"),
-            allocate_purchase_item,
+            marker("receção andaime Remodelação Centro"),
+            receive_purchase_item,
             purchase_item=purchase_items["scaffolding"],
             location=remodelacao,
             quantity=Decimal("6.000"),
@@ -381,8 +381,8 @@ class Command(BaseCommand):
             user=user,
         )
         self._ensure_movement(
-            marker("alocação andaime armazém"),
-            allocate_purchase_item,
+            marker("receção andaime armazém"),
+            receive_purchase_item,
             purchase_item=purchase_items["scaffolding"],
             location=warehouse,
             quantity=Decimal("4.000"),

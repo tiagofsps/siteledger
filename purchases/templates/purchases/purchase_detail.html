@@ -16,9 +16,6 @@
     </div>
     {% if can_change_purchase %}
       <div class="page-actions">
-        {% if can_allocate and has_pending_allocations %}
-          <a class="button" href="{% url 'purchases:purchase_allocations' purchase.pk %}">Receber quantidades</a>
-        {% endif %}
         <a class="button button--secondary" href="{% url 'purchases:purchase_update' purchase.pk %}">Editar</a>
       </div>
     {% endif %}
@@ -60,7 +57,6 @@
                 <h3>{{ item.description }}</h3>
                 <p class="record-card-meta">
                   {{ item.quantity|floatformat:3 }} {{ item.get_unit_display }}
-                  {% if item.item_id %}· {{ item.item.name }}{% endif %}
                   {% if item.unit_price is not None %}
                     × {{ item.unit_price|floatformat:2 }} €
                   {% endif %}
@@ -78,7 +74,7 @@
             <dl class="obra-meta">
               <div>
                 <dt>Recebido</dt>
-                <dd>{{ item.active_allocated|default_if_none:0|floatformat:3 }} {{ item.get_unit_display }}</dd>
+                <dd>{{ item.active_received|default_if_none:0|floatformat:3 }} {{ item.get_unit_display }}</dd>
               </div>
               <div>
                 <dt>Por receber</dt>
@@ -86,45 +82,95 @@
               </div>
             </dl>
 
-            {% if can_allocate %}
-              <div class="item-card-actions">
-                <a class="button button--secondary button--small" href="{% url 'purchases:item_allocations' purchase.pk item.pk %}">Receber</a>
-              </div>
+            {% if item.receipt_form %}
+              <form class="item-receipt-form" method="post" action="{% url 'purchases:purchase_receive' purchase.pk %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="item_pk" value="{{ item.pk }}">
+                {{ item.receipt_form.non_field_errors }}
+
+                <div class="field-grid">
+                  <div class="form-field{% if item.receipt_form.location.errors %} form-field--error{% endif %}">
+                    {{ item.receipt_form.location.label_tag }}
+                    {{ item.receipt_form.location }}
+                    {{ item.receipt_form.location.errors }}
+                  </div>
+                  <div class="form-field{% if item.receipt_form.quantity.errors %} form-field--error{% endif %}">
+                    {{ item.receipt_form.quantity.label_tag }}
+                    {{ item.receipt_form.quantity }}
+                    {{ item.receipt_form.quantity.errors }}
+                  </div>
+                  <div class="form-field{% if item.receipt_form.movement_date.errors %} form-field--error{% endif %}">
+                    {{ item.receipt_form.movement_date.label_tag }}
+                    {{ item.receipt_form.movement_date }}
+                    {{ item.receipt_form.movement_date.errors }}
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button class="button" type="submit">Receber</button>
+                </div>
+              </form>
+            {% elif item.remaining_quantity <= 0 %}
+              <p class="text-muted">Esta linha já está totalmente recebida.</p>
+            {% elif not item.item.is_active %}
+              <p class="notice">
+                O artigo do catálogo está inativo.
+                {% if perms.inventory.change_item %}
+                  <a href="{% url 'inventory:item_update' item.item_id %}">Reativar artigo</a>
+                {% endif %}
+              </p>
+            {% elif can_receive %}
+              <p class="text-muted">Esta linha ainda não foi recebida.</p>
+            {% else %}
+              <p class="text-muted">Não tem permissão para receber quantidades.</p>
             {% endif %}
 
-            {% if item.movements.all %}
-              <div class="table-scroll">
-                <table class="data-table">
-                  <caption class="visually-hidden">Receções de {{ item.description }}</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Data</th>
-                      <th scope="col">Destino</th>
-                      <th scope="col">Quantidade</th>
-                      <th scope="col">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for movement in item.movements.all %}
-                      <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
-                        <td data-label="Data">{{ movement.movement_date|date:"d/m/Y" }}</td>
-                        <td data-label="Destino">{{ movement.to_location.name|default:"—" }}</td>
-                        <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.get_unit_display }}</td>
-                        <td data-label="Estado">
-                          {% if movement.is_cancelled %}
-                            <span class="status-badge status-badge--archived">Cancelado</span>
-                          {% else %}
-                            <span class="status-badge status-badge--completed">Ativo</span>
-                          {% endif %}
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <p class="text-muted">Esta linha ainda não foi recebida.</p>
-            {% endif %}
+            {% with movements=item.movements.all %}
+              {% if movements %}
+                <details class="item-history">
+                  <summary>Receções ({{ movements|length }})</summary>
+                  <div class="table-scroll">
+                    <table class="data-table">
+                      <caption class="visually-hidden">Receções de {{ item.description }}</caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Data</th>
+                          <th scope="col">Destino</th>
+                          <th scope="col">Quantidade</th>
+                          <th scope="col">Estado</th>
+                          <th scope="col">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for movement in movements %}
+                          <tr{% if movement.is_cancelled %} class="row-muted"{% endif %}>
+                            <td data-label="Data">
+                              <a href="{{ movement.get_absolute_url }}">{{ movement.movement_date|date:"d/m/Y" }}</a>
+                            </td>
+                            <td data-label="Destino">{{ movement.to_location.name|default:"—" }}</td>
+                            <td data-label="Quantidade">{{ movement.quantity|floatformat:3 }} {{ item.get_unit_display }}</td>
+                            <td data-label="Estado">
+                              {% if movement.is_cancelled %}
+                                <span class="status-badge status-badge--archived">Cancelado</span>
+                              {% else %}
+                                <span class="status-badge status-badge--completed">Ativo</span>
+                              {% endif %}
+                            </td>
+                            <td data-label="Ações">
+                              {% if not movement.is_cancelled and perms.inventory.change_stockmovement %}
+                                <a class="button button--danger button--small" href="{% url 'inventory:movement_cancel' movement.pk %}">Cancelar</a>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              {% endif %}
+            {% endwith %}
           </article>
         {% endfor %}
       </div>

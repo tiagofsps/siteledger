@@ -10,14 +10,9 @@ urlpatterns = [
     path("<int:pk>/", views.PurchaseDetailView.as_view(), name="purchase_detail"),
     path("<int:pk>/edit/", views.purchase_update, name="purchase_update"),
     path(
-        "<int:pk>/allocations/",
-        views.purchase_allocations,
-        name="purchase_allocations",
-    ),
-    path(
-        "<int:purchase_pk>/items/<int:item_pk>/allocations/",
-        views.item_allocations,
-        name="item_allocations",
+        "<int:pk>/receive/",
+        views.purchase_receive,
+        name="purchase_receive",
     ),
     path(
         "items/row/",

@@ -1732,3 +1732,25 @@ textarea:focus-visible {
     columns: 1;
   }
 }
+
+.item-receipt-form {
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.item-receipt-form .form-actions {
+  margin-top: 0.75rem;
+}
+
+.item-history {
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.item-history summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}

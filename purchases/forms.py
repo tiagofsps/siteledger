@@ -5,13 +5,14 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db.models import Q
+from django.utils import timezone
 
 from inventory.models import Item, Location
-from inventory.units import validate_quantity
+from inventory.units import is_discrete, quantity_step, validate_quantity
 from projects.models import Project
 
 from .models import Purchase, PurchaseItem, Supplier
-from .services import active_allocated_quantity
+from .services import active_received_quantity
 
 
 class SupplierForm(forms.ModelForm):
@@ -157,7 +158,7 @@ class PurchaseFilterForm(forms.Form):
         self.fields["project"].queryset = Project.objects.order_by("name")
 
 
-class AllocationForm(forms.Form):
+class ReceiptForm(forms.Form):
     location = forms.ModelChoiceField(
         label="Localização",
         queryset=Location.objects.none(),
@@ -170,6 +171,11 @@ class AllocationForm(forms.Form):
         min_value=Decimal("0.001"),
         widget=forms.NumberInput(attrs={"step": "0.001", "min": "0.001"}),
     )
+    movement_date = forms.DateField(
+        label="Data da receção",
+        widget=forms.DateInput(attrs={"type": "date"}),
+        initial=timezone.localdate,
+    )
 
     def __init__(self, *args, item=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -180,6 +186,10 @@ class AllocationForm(forms.Form):
             .order_by("name")
         )
         self.fields["quantity"].validators.append(MinValueValidator(Decimal("0.001")))
+        if item is not None:
+            self.fields["quantity"].widget.attrs["step"] = quantity_step(item.unit)
+            if is_discrete(item.unit):
+                self.fields["quantity"].widget.attrs["min"] = "1"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -196,13 +206,18 @@ class AllocationForm(forms.Form):
                 "Não é possível receber quantidades numa obra arquivada.",
             )
 
-        allocated = active_allocated_quantity(self.item)
-        if allocated + quantity > self.item.quantity:
+        try:
+            validate_quantity(self.item.unit, quantity)
+        except ValidationError as error:
+            self.add_error("quantity", error)
+
+        received = active_received_quantity(self.item)
+        if received + quantity > self.item.quantity:
             self.add_error(
                 "quantity",
                 (
                     "A quantidade excede o que falta receber nesta linha "
-                    f"({self.item.quantity - allocated})."
+                    f"({self.item.quantity - received})."
                 ),
             )
         return cleaned_data

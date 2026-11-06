@@ -121,7 +121,7 @@ class PurchaseItem(models.Model):
             rounding=ROUND_HALF_UP,
         )
 
-    def get_active_allocated_quantity(self):
+    def get_active_received_quantity(self):
         return (
             self.movements.filter(
                 movement_type="initial_entry",
@@ -132,7 +132,7 @@ class PurchaseItem(models.Model):
 
     @property
     def remaining_quantity(self):
-        allocated = getattr(self, "active_allocated", None)
-        if allocated is None:
-            allocated = self.get_active_allocated_quantity()
-        return self.quantity - allocated
+        received = getattr(self, "active_received", None)
+        if received is None:
+            received = self.get_active_received_quantity()
+        return self.quantity - received

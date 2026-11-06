@@ -69,7 +69,7 @@ In application code, all quantity-changing writes must use `inventory/services.p
 - Settings: `LOGIN_URL = "login"`, `LOGIN_REDIRECT_URL = "projects:list"`, `LOGOUT_REDIRECT_URL = "login"`.
 - No self-registration. Administrators create and manage users and recover passwords via Django Admin.
 - `LoginRequiredMiddleware` applies by default; `/admin/login/` remains accessible.
-- Permissions follow `view_/add_/change_<model>`. Allocation requires `change_purchase` and `view_location`; cancellation requires `change_stockmovement`; adjustments use `add_stockmovement` with a mandatory reason.
+- Permissions follow `view_/add_/change_<model>`. A receipt requires `change_purchase` and `view_location`; cancellation requires `change_stockmovement`; adjustments use `add_stockmovement` with a mandatory reason.
 - Django Admin registers only `Project` from the domain models. Supplier, purchase, purchase-line, item, location and movement models stay unregistered.
 - Admin rules: no project deletion, no `archived_at` editing, archived projects read-only, timestamps read-only.
 - Check permissions server-side and never trust client-supplied IDs, prices, quantities or permissions.
