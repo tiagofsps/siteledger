@@ -1,0 +1,20 @@
+[run]
+branch = True
+source =
+    config
+    projects
+    purchases
+    inventory
+omit =
+    */migrations/*
+    */tests/*
+    */apps.py
+    */management/*
+    config/asgi.py
+    config/wsgi.py
+    config/settings.py
+
+[report]
+show_missing = True
+skip_covered = True
+fail_under = 99

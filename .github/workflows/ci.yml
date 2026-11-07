@@ -54,7 +54,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: Run Django checks
         run: python manage.py check
@@ -62,8 +62,10 @@ jobs:
       - name: Check migrations
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run tests
-        run: python manage.py test
+      - name: Run tests with coverage
+        run: |
+          python -m coverage run manage.py test
+          python -m coverage report
 
       - name: Validate production settings
         env:
