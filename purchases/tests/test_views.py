@@ -1,7 +1,10 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -9,7 +12,10 @@ from inventory.models import StockMovement
 from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
 from projects.tests.base import create_project, create_user
 
+from purchases.forms import PurchaseForm, SupplierForm
+from purchases.formsets import PurchaseItemFormSet
 from purchases.models import Purchase, PurchaseItem, Supplier
+from purchases.views import _purchase_wizard_step
 
 from .base import create_purchase, create_purchase_item, create_supplier
 
@@ -73,6 +79,79 @@ class SupplierViewTests(TestCase):
             reverse("purchases:supplier_create"),
             {"name": "fornecedor", "is_active": "on"},
         )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Já existe um fornecedor")
+
+    def test_supplier_list_filters_and_htmx(self):
+        create_supplier(name="Fornecedor A")
+        create_supplier(name="Fornecedor B")
+
+        response = self.client.get(reverse("purchases:supplier_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Fornecedor A")
+        self.assertContains(response, "Fornecedor B")
+
+        response = self.client.get(
+            reverse("purchases:supplier_list"),
+            {"q": "Fornecedor A"},
+        )
+        self.assertContains(response, "Fornecedor A")
+        self.assertNotContains(response, "Fornecedor B")
+
+        response = self.client.get(
+            reverse("purchases:supplier_list"),
+            {"q": "Fornecedor A"},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertTemplateUsed(
+            response,
+            "purchases/partials/supplier_results.html",
+        )
+
+        response = self.client.get(
+            reverse("purchases:supplier_list"),
+            {"q": "   "},
+        )
+        self.assertContains(response, "Fornecedor A")
+        self.assertContains(response, "Fornecedor B")
+
+    def test_supplier_update_get_renders_form(self):
+        supplier = create_supplier(name="Fornecedor")
+
+        response = self.client.get(
+            reverse("purchases:supplier_update", args=[supplier.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Editar fornecedor")
+
+    def test_supplier_create_integrity_error_fallback(self):
+        with patch.object(
+            SupplierForm,
+            "save",
+            side_effect=IntegrityError,
+        ):
+            response = self.client.post(
+                reverse("purchases:supplier_create"),
+                {"name": "Fornecedor Único", "is_active": "on"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Já existe um fornecedor")
+
+    def test_supplier_update_integrity_error_fallback(self):
+        supplier = create_supplier(name="Fornecedor")
+
+        with patch.object(
+            SupplierForm,
+            "save",
+            side_effect=IntegrityError,
+        ):
+            response = self.client.post(
+                reverse("purchases:supplier_update", args=[supplier.pk]),
+                {"name": "Fornecedor Único", "is_active": "on"},
+            )
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Já existe um fornecedor")
 
@@ -341,6 +420,73 @@ class PurchaseViewTests(TestCase):
 
         self.assertContains(response, reverse("purchases:supplier_list"))
 
+    def test_purchase_list_filters_by_query(self):
+        purchase = create_purchase(supplier=self.supplier)
+        create_purchase_item(
+            purchase=purchase,
+            item=self.item,
+            description="Material especial",
+            unit=self.item.unit,
+            quantity=Decimal("2"),
+        )
+        other = create_purchase(supplier=create_supplier(name="Outro fornecedor"))
+        create_purchase_item(
+            purchase=other,
+            item=create_item(name="Outro artigo"),
+            description="Outro artigo",
+            quantity=Decimal("1"),
+        )
+
+        response = self.client.get(
+            reverse("purchases:purchase_list"),
+            {"q": "especial"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, purchase.get_absolute_url())
+        self.assertNotContains(response, other.get_absolute_url())
+
+    def test_purchase_list_filters_by_supplier(self):
+        purchase = create_purchase(supplier=self.supplier)
+        create_purchase_item(purchase=purchase, item=self.item, quantity=Decimal("2"))
+        other_supplier = create_supplier(name="Outro fornecedor")
+        other = create_purchase(supplier=other_supplier)
+        create_purchase_item(purchase=other, item=self.item, quantity=Decimal("1"))
+
+        response = self.client.get(
+            reverse("purchases:purchase_list"),
+            {"supplier": self.supplier.pk},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, purchase.get_absolute_url())
+        self.assertNotContains(response, other.get_absolute_url())
+
+    def test_purchase_list_htmx_partial(self):
+        response = self.client.get(
+            reverse("purchases:purchase_list"),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "purchases/partials/purchase_results.html",
+        )
+
+    def test_purchase_list_hides_project_filter_without_permission(self):
+        self.client.force_login(
+            create_user(
+                "purchase-viewer",
+                permissions=("purchases.view_purchase",),
+            )
+        )
+
+        response = self.client.get(reverse("purchases:purchase_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("project", response.context["filter_form"].fields)
+
     def test_purchase_list_filters_by_project(self):
         project = create_project(name="Obra Filtrada")
         location = project_location(project)
@@ -563,6 +709,19 @@ class PurchaseReceiptViewTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_receive_validation_error_renders_form(self):
+        with patch(
+            "purchases.views.receive_purchase_item",
+            side_effect=ValidationError("Falha simulada"),
+        ):
+            response = self.client.post(
+                reverse("purchases:purchase_receive", args=[self.purchase.pk]),
+                self.receipt_data(self.purchase_item),
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Falha simulada")
+
     def test_get_is_not_allowed(self):
         response = self.client.get(
             reverse("purchases:purchase_receive", args=[self.purchase.pk])
@@ -614,6 +773,13 @@ class PurchaseItemRowTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_row_endpoint_rejects_invalid_total(self):
+        response = self.client.get(
+            reverse("purchases:purchase_item_row"),
+            {"items-TOTAL_FORMS": "abc"},
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_row_endpoint_requires_purchase_permission(self):
         self.client.force_login(create_user("viewer"))
         response = self.client.get(reverse("purchases:purchase_item_row"))
@@ -649,3 +815,24 @@ class ReceiptMarkupTests(TestCase):
         self.assertContains(response, 'class="switch"')
         self.assertContains(response, "switch-track")
         self.assertContains(response, 'type="checkbox"')
+
+
+class PurchaseWizardStepTests(TestCase):
+    def test_unbound_and_valid_forms_return_first_step(self):
+        supplier = create_supplier()
+        item = create_item()
+
+        unbound_form = PurchaseForm()
+        formset = PurchaseItemFormSet(instance=Purchase(), prefix="items")
+        self.assertEqual(_purchase_wizard_step(unbound_form, formset), 1)
+
+        data = purchase_form_data(supplier=supplier, item=item)
+        form = PurchaseForm(data=data)
+        formset = PurchaseItemFormSet(
+            data=data,
+            instance=Purchase(),
+            prefix="items",
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertTrue(formset.is_valid(), formset.errors)
+        self.assertEqual(_purchase_wizard_step(form, formset), 1)

@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 
 from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
+from inventory.models import Location
 from projects.tests.base import create_project
 
 from purchases.forms import ReceiptForm, PurchaseItemForm, SupplierForm
@@ -113,6 +114,36 @@ class ReceiptFormTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("location", form.errors)
+
+    def test_inactive_location_is_rejected(self):
+        project = create_project()
+        location = project_location(project)
+        location.is_active = False
+        location.save(update_fields=["is_active"])
+
+        form = ReceiptForm(
+            data={"location": location.pk, "quantity": "1.000"},
+            item=self.purchase_item,
+        )
+        form.fields["location"].queryset = Location.objects.all()
+        self.assertFalse(form.is_valid())
+        self.assertIn("location", form.errors)
+
+    def test_clean_without_data_returns_early(self):
+        # A bound form with no data reaches clean() with missing location,
+        # quantity and item, exercising the early-return branch.
+        form = ReceiptForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertIn("location", form.errors)
+
+    def test_continuous_unit_keeps_fractional_step(self):
+        item = create_item(name="Areia", unit="m3")
+        line = create_purchase_item(item=item, quantity=Decimal("5"))
+
+        form = ReceiptForm(item=line)
+
+        self.assertEqual(form.fields["quantity"].widget.attrs["step"], "0.001")
+        self.assertNotEqual(str(form.fields["quantity"].widget.attrs["min"]), "1")
 
 
 class UnitPriceRequirementTests(TestCase):

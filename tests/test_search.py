@@ -128,3 +128,17 @@ class SearchViewTests(TestCase):
         self.assertContains(response, "Oculto Obra")
         self.assertNotContains(response, "Oculto Artigo")
         self.assertNotContains(response, "Oculto Fornecedor")
+
+    def test_search_without_project_permission(self):
+        self.client.force_login(
+            create_user(
+                "supplier-viewer",
+                permissions=("purchases.view_supplier",),
+            )
+        )
+
+        response = self.client.get(reverse("search"), {"q": "Cimento"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.project.get_absolute_url())
+        self.assertContains(response, self.supplier.name)

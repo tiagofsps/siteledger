@@ -30,3 +30,14 @@ class ProjectModelTests(TestCase):
     def test_absolute_url_uses_projects_namespace(self):
         project = create_project()
         self.assertEqual(project.get_absolute_url(), f"/projects/{project.pk}/")
+
+    def test_archive_and_unarchive_are_idempotent(self):
+        project = create_project()
+
+        project.archive()
+        project.archive()
+        self.assertTrue(project.is_archived)
+
+        project.unarchive()
+        project.unarchive()
+        self.assertFalse(project.is_archived)
