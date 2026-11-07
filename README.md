@@ -24,6 +24,64 @@ Recorded balances are theoretical quantities derived from active movements. They
 - `Location`: one logical warehouse and one location per project.
 - `StockMovement`: append-only quantity change with an item, optional source and destination locations, optional purchase line, positive quantity, type, date, notes, creation user and cancellation fields.
 
+The relationships between the models:
+
+```mermaid
+erDiagram
+    SUPPLIER ||--o{ PURCHASE : supplies
+    PURCHASE ||--o{ PURCHASE_ITEM : contains
+    ITEM ||--o{ PURCHASE_ITEM : catalogues
+    PURCHASE_ITEM o|--o{ STOCK_MOVEMENT : receipts
+    PROJECT ||--|| LOCATION : "has one"
+    ITEM ||--o{ STOCK_MOVEMENT : "recorded in"
+    LOCATION ||--o{ STOCK_MOVEMENT : destination
+    LOCATION ||--o{ STOCK_MOVEMENT : source
+    USER o|--o{ STOCK_MOVEMENT : creates
+    USER o|--o{ STOCK_MOVEMENT : cancels
+
+    PROJECT {
+        string name
+        string status
+        datetime archived_at
+    }
+    SUPPLIER {
+        string name
+        boolean is_active
+    }
+    PURCHASE {
+        date purchase_date
+        decimal total
+        text notes
+    }
+    PURCHASE_ITEM {
+        string description
+        string unit
+        decimal quantity
+        decimal unit_price
+    }
+    ITEM {
+        string name
+        string category
+        string unit
+        boolean is_active
+    }
+    LOCATION {
+        string name
+        string location_type
+        boolean is_active
+    }
+    STOCK_MOVEMENT {
+        string movement_type
+        decimal quantity
+        date movement_date
+        datetime cancelled_at
+        text cancellation_reason
+    }
+    USER {
+        string username
+    }
+```
+
 Movement types:
 
 - `INITIAL_ENTRY`: purchased or legacy quantity entering a location.
@@ -89,7 +147,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-For development, including the coverage tool:
+For development, including the coverage and lint tools:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -258,6 +316,7 @@ SQLite does not provide row locking equivalent to PostgreSQL. The concurrency be
 ## Checks
 
 ```bash
+ruff check
 python manage.py check
 python manage.py test
 python manage.py test projects
@@ -265,6 +324,9 @@ python manage.py test purchases
 python manage.py test inventory
 python manage.py makemigrations --check --dry-run
 ```
+
+Code style and import ordering are checked with [Ruff](https://docs.astral.sh/ruff/),
+configured in `ruff.toml`.
 
 Test coverage is measured with [Coverage.py](https://coverage.readthedocs.io/),
 configured in `.coveragerc`:
@@ -278,9 +340,9 @@ Coverage excludes Django bootstrap files (`config/settings.py`, `config/asgi.py`
 `config/wsgi.py`), app configs, migrations, management commands and the tests
 themselves. The report fails when coverage drops below the configured threshold.
 
-Continuous integration runs the same checks on every push to `main` and every pull
-request, against PostgreSQL, using Python 3.14.10. See
-[`docs/render-deployment.md`](docs/render-deployment.md).
+Continuous integration runs the same checks, including linting and coverage, on
+every push to `main` and every pull request, against PostgreSQL, using Python
+3.14.10. See [`docs/render-deployment.md`](docs/render-deployment.md).
 
 ## Commit conventions
 
