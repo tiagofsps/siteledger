@@ -89,6 +89,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+For development, including the coverage tool:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
 ## Environment configuration
 
 ```bash
@@ -259,6 +265,18 @@ python manage.py test purchases
 python manage.py test inventory
 python manage.py makemigrations --check --dry-run
 ```
+
+Test coverage is measured with [Coverage.py](https://coverage.readthedocs.io/),
+configured in `.coveragerc`:
+
+```bash
+python -m coverage run manage.py test
+python -m coverage report
+```
+
+Coverage excludes Django bootstrap files (`config/settings.py`, `config/asgi.py`,
+`config/wsgi.py`), app configs, migrations, management commands and the tests
+themselves. The report fails when coverage drops below the configured threshold.
 
 Continuous integration runs the same checks on every push to `main` and every pull
 request, against PostgreSQL, using Python 3.14.10. See
