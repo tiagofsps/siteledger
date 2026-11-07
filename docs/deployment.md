@@ -49,11 +49,16 @@ Changes to `render.yaml` itself are not deployed automatically: sync the Bluepri
 ## Added files
 
 - `render.yaml`: Blueprint for the web service and PostgreSQL database.
-- `.github/workflows/ci.yml`: PostgreSQL test workflow.
+- `.github/workflows/ci.yml`: PostgreSQL test workflow with lint and coverage.
 - Production dependencies in `requirements.txt`:
   - `gunicorn`
   - `whitenoise`
   - `dj-database-url`
+- Development dependencies in `requirements-dev.txt`:
+  - `coverage`
+  - `ruff`
+- `.coveragerc`: coverage configuration and threshold.
+- `ruff.toml`: lint configuration.
 
 ## Application settings
 
@@ -143,16 +148,20 @@ After deployment:
 `.github/workflows/ci.yml` runs on every pull request, every push to `main` and on manual dispatch:
 
 1. check out the repository;
-2. install Python 3.14.10 and the pinned requirements;
-3. run `python manage.py check`;
-4. run `python manage.py makemigrations --check --dry-run`;
-5. run `python manage.py test` against a PostgreSQL 17 service container;
-6. run `python manage.py check` with `DJANGO_DEBUG=False` to validate production settings;
-7. run `python manage.py collectstatic --noinput` with `DJANGO_DEBUG=False`, which exercises the WhiteNoise manifest storage.
+2. install Python 3.14.10 and the pinned development requirements;
+3. run `ruff check`;
+4. run `python manage.py check`;
+5. run `python manage.py makemigrations --check --dry-run`;
+6. run `python -m coverage run manage.py test` against a PostgreSQL 17 service container;
+7. run `python -m coverage report`, which enforces the threshold in `.coveragerc`;
+8. run `python manage.py check` with `DJANGO_DEBUG=False` to validate production settings;
+9. run `python manage.py collectstatic --noinput` with `DJANGO_DEBUG=False`, which exercises the WhiteNoise manifest storage.
 
 Tests run with `DJANGO_DEBUG` enabled, as in local development. Running the suite with production settings is not supported: HTTPS redirects change every test response to `301`, and hashed manifest static files break template assertions. Production settings are validated by the last two steps instead.
 
 Running the suite on PostgreSQL matters: the first CI run caught a `FOR UPDATE cannot be applied to the nullable side of an outer join` error that SQLite silently accepted.
+
+Coverage is checked in the same job. `.coveragerc` omits Django bootstrap files, app configs, migrations, management commands and the tests, and fails the build when total coverage drops below the configured threshold.
 
 ## Rollback
 
