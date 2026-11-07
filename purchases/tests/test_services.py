@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.test import TestCase
 
 from inventory.tests.base import create_initial_entry, create_item, warehouse
-
 from purchases.services import (
     active_received_quantity,
     purchase_item_subtotal,

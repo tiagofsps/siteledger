@@ -2,11 +2,15 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
 from inventory.models import Location
+from inventory.tests.base import (
+    create_initial_entry,
+    create_item,
+    project_location,
+    warehouse,
+)
 from projects.tests.base import create_project
-
-from purchases.forms import ReceiptForm, PurchaseItemForm, SupplierForm
+from purchases.forms import PurchaseItemForm, ReceiptForm, SupplierForm
 
 from .base import create_purchase_item, create_supplier
 

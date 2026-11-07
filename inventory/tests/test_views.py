@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -11,7 +10,6 @@ from inventory.models import Item, Location, StockMovement
 from projects.tests.base import create_user
 
 from .base import create_initial_entry, create_item, project_location, warehouse
-
 
 INVENTORY_PERMISSIONS = (
     "inventory.view_item",

@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from inventory.models import Item, StockMovement
 from inventory.services import (
-    receive_purchase_item,
     cancel_stock_movement,
     create_adjustment_in,
     create_adjustment_out,
@@ -17,6 +16,7 @@ from inventory.services import (
     create_transfer,
     ensure_project_location,
     get_warehouse_location,
+    receive_purchase_item,
     return_to_warehouse,
 )
 from projects.models import Project

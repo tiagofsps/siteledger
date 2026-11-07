@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.test import TestCase
 
 from inventory.tests.base import create_initial_entry, create_item, warehouse
-
 from purchases.formsets import PurchaseItemFormSet
 
 from .base import create_purchase, create_purchase_item
