@@ -101,3 +101,46 @@ class PurchaseItemFormSetTests(TestCase):
         formset = PurchaseItemFormSet(data, instance=purchase, prefix="items")
         self.assertFalse(formset.is_valid())
         self.assertIn("quantity", formset.forms[0].errors)
+
+    def test_line_without_movements_can_be_deleted(self):
+        item = create_item()
+        purchase = create_purchase()
+        deleted = create_purchase_item(
+            purchase=purchase,
+            item=item,
+            description=item.name,
+            unit=item.unit,
+            quantity=Decimal("5"),
+            unit_price=Decimal("10.00"),
+        )
+        kept = create_purchase_item(
+            purchase=purchase,
+            item=item,
+            description=item.name,
+            unit=item.unit,
+            quantity=Decimal("2"),
+            unit_price=Decimal("10.00"),
+        )
+
+        data = management_data(total=2, initial=2)
+        data.update(
+            {
+                "items-0-id": str(deleted.pk),
+                "items-0-purchase": str(purchase.pk),
+                "items-0-item": str(item.pk),
+                "items-0-description": item.name,
+                "items-0-unit": item.unit,
+                "items-0-quantity": "5.000",
+                "items-0-unit_price": "10.00",
+                "items-0-DELETE": "on",
+                "items-1-id": str(kept.pk),
+                "items-1-purchase": str(purchase.pk),
+                "items-1-item": str(item.pk),
+                "items-1-description": item.name,
+                "items-1-unit": item.unit,
+                "items-1-quantity": "2.000",
+                "items-1-unit_price": "10.00",
+            }
+        )
+        formset = PurchaseItemFormSet(data, instance=purchase, prefix="items")
+        self.assertTrue(formset.is_valid(), formset.errors)

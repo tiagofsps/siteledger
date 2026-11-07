@@ -34,6 +34,11 @@ class PurchaseModelTests(TestCase):
             f"/purchases/{purchase.pk}/",
         )
 
+    def test_str(self):
+        purchase = create_purchase()
+        self.assertIn("Compra de", str(purchase))
+        self.assertIn(purchase.supplier.name, str(purchase))
+
 
 class PurchaseItemModelTests(TestCase):
     def test_quantity_must_be_positive(self):
@@ -49,6 +54,10 @@ class PurchaseItemModelTests(TestCase):
     def test_subtotal_is_none_without_unit_price(self):
         item = create_purchase_item(unit_price=None)
         self.assertIsNone(item.subtotal)
+
+    def test_str_returns_description(self):
+        item = create_purchase_item(description="Descrição personalizada")
+        self.assertEqual(str(item), "Descrição personalizada")
 
     def test_subtotal_uses_round_half_up(self):
         item = create_purchase_item(

@@ -31,6 +31,70 @@ class ProjectViewTests(TestCase):
         response = self.client.get(reverse("projects:list"), {"estado": "archived"})
         self.assertContains(response, "Obra Arquivada")
 
+    def test_list_status_all_shows_active_and_archived(self):
+        create_project(name="Obra Ativa")
+        create_project(name="Obra Arquivada").archive()
+
+        response = self.client.get(reverse("projects:list"), {"estado": "all"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Obra Ativa")
+        self.assertContains(response, "Obra Arquivada")
+
+    def test_list_filters_by_valid_status(self):
+        create_project(name="Obra Planeada", status=Project.Status.PLANNED)
+        create_project(name="Obra Em Curso", status=Project.Status.IN_PROGRESS)
+
+        response = self.client.get(
+            reverse("projects:list"),
+            {"estado": Project.Status.PLANNED},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Obra Planeada")
+        self.assertNotContains(response, "Obra Em Curso")
+
+    def test_list_filters_by_query(self):
+        create_project(name="Obra Alpha")
+        create_project(name="Obra Beta")
+
+        response = self.client.get(reverse("projects:list"), {"q": "Alpha"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Obra Alpha")
+        self.assertNotContains(response, "Obra Beta")
+
+    def test_list_htmx_partial(self):
+        create_project(name="Obra Ativa")
+
+        response = self.client.get(
+            reverse("projects:list"),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "projects/partials/project_results.html",
+        )
+
+    def test_archive_and_unarchive_confirmation_pages(self):
+        project = create_project()
+        response = self.client.get(reverse("projects:archive", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "projects/project_confirm_archive.html",
+        )
+
+        project.archive()
+        response = self.client.get(reverse("projects:unarchive", args=[project.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "projects/project_confirm_unarchive.html",
+        )
+
     def test_create_project(self):
         response = self.client.post(
             reverse("projects:create"),

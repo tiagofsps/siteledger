@@ -1,7 +1,9 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -240,6 +242,155 @@ class InventoryViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["wizard_initial_step"], 2)
         self.assertIn("notes", response.context["form"].errors)
+
+    def test_movement_list_filters_by_location(self):
+        location = project_location()
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"location": location.pk},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["movements"]), [])
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"location": self.warehouse.pk},
+        )
+        self.assertEqual(response.context["movements"].count(), 1)
+
+    def test_movement_list_filters_by_type(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"movement_type": StockMovement.Type.TRANSFER},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["movements"]), [])
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"movement_type": StockMovement.Type.INITIAL_ENTRY},
+        )
+        self.assertEqual(response.context["movements"].count(), 1)
+
+    def test_movement_list_ignores_invalid_filters(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_list"),
+            {"item": "999999"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["movements"].count(), 1)
+
+    def test_movement_detail_renders(self):
+        movement = create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        response = self.client.get(movement.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.item.name)
+
+    def test_return_to_warehouse_form_renders(self):
+        response = self.client.get(reverse("inventory:return_to_warehouse"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/movement_form.html")
+
+    def test_adjustment_out_creation(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("5"),
+        )
+
+        response = self.client.post(
+            reverse("inventory:adjustment_out_create"),
+            {
+                "item": self.item.pk,
+                "from_location": self.warehouse.pk,
+                "quantity": "2.000",
+                "movement_date": "2026-01-20",
+                "notes": "Material danificado",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        movement = StockMovement.objects.get(
+            movement_type=StockMovement.Type.ADJUSTMENT_OUT,
+        )
+        self.assertEqual(movement.quantity, Decimal("2.000"))
+
+    def test_cancel_get_page_renders(self):
+        movement = create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_cancel", args=[movement.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "inventory/movement_cancel.html")
+
+    def test_cancel_already_cancelled_redirects(self):
+        movement = create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+        self.client.post(
+            reverse("inventory:movement_cancel", args=[movement.pk]),
+            {"reason": "Registo errado"},
+        )
+
+        response = self.client.get(
+            reverse("inventory:movement_cancel", args=[movement.pk])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], movement.get_absolute_url())
+
+    def test_cancel_validation_error_renders_form(self):
+        movement = create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("2"),
+        )
+
+        with patch(
+            "inventory.views.cancel_stock_movement",
+            side_effect=ValidationError("Falha simulada"),
+        ):
+            response = self.client.post(
+                reverse("inventory:movement_cancel", args=[movement.pk]),
+                {"reason": "Motivo"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Falha simulada")
 
     def test_permissions_are_required(self):
         self.client.force_login(create_user("viewer"))

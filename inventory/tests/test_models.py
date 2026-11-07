@@ -7,7 +7,7 @@ from django.test import TestCase
 from inventory.models import Item, Location, StockMovement
 from purchases.tests.base import create_purchase_item
 
-from .base import create_item, project_location, warehouse
+from .base import create_initial_entry, create_item, project_location, warehouse
 
 
 class ItemModelTests(TestCase):
@@ -134,3 +134,15 @@ class StockMovementModelTests(TestCase):
             movement_date=date(2026, 1, 20),
         )
         self.assertFalse(movement.is_cancelled)
+
+    def test_str_includes_type_item_quantity_and_unit(self):
+        movement = create_initial_entry(
+            item=self.item,
+            location=self.location,
+            quantity=Decimal("10"),
+        )
+
+        self.assertEqual(
+            str(movement),
+            "Entrada inicial - Cimento - 10 saco",
+        )

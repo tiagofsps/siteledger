@@ -11,6 +11,8 @@ from inventory.services import (
     create_adjustment_in,
     create_adjustment_out,
     create_transfer,
+    ensure_project_location,
+    get_item_location_balances,
     get_project_location_balances,
     location_balance,
     return_to_warehouse,
@@ -269,6 +271,130 @@ class MovementServiceTests(TestCase):
         location, balances = get_project_location_balances(self.project)
         self.assertEqual(location, self.project_location)
         self.assertEqual(balances, [])
+
+    def test_ensure_project_location_renames_location(self):
+        location = ensure_project_location(self.project)
+        self.assertEqual(location.name, "Obra A")
+
+        self.project.name = "Obra Renomeada"
+        self.project.save(update_fields=["name"])
+
+        ensure_project_location(self.project)
+        location.refresh_from_db()
+        self.assertEqual(location.name, "Obra Renomeada")
+
+    def test_get_item_location_balances_includes_outgoing_locations(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("10"),
+        )
+        create_transfer(
+            item=self.item,
+            from_location=self.warehouse,
+            to_location=self.project_location,
+            quantity=Decimal("4"),
+            movement_date=date(2026, 2, 1),
+            user=None,
+        )
+
+        balances = get_item_location_balances(self.item)
+
+        self.assertEqual(len(balances), 2)
+        quantities = {b["location"].pk: b["quantity"] for b in balances}
+        self.assertEqual(quantities[self.warehouse.pk], Decimal("6"))
+        self.assertEqual(quantities[self.project_location.pk], Decimal("4"))
+
+    def test_quantity_must_be_positive(self):
+        with self.assertRaises(ValidationError):
+            create_initial_entry(
+                item=self.item,
+                location=self.warehouse,
+                quantity=Decimal("0"),
+            )
+
+    def test_outgoing_inactive_location_is_rejected(self):
+        self.warehouse.is_active = False
+        self.warehouse.save(update_fields=["is_active"])
+
+        with self.assertRaises(ValidationError):
+            create_transfer(
+                item=self.item,
+                from_location=self.warehouse,
+                to_location=self.project_location,
+                quantity=Decimal("1"),
+                movement_date=date(2026, 2, 1),
+                user=None,
+            )
+
+    def test_transfer_between_same_location_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            create_transfer(
+                item=self.item,
+                from_location=self.warehouse,
+                to_location=self.warehouse,
+                quantity=Decimal("1"),
+                movement_date=date(2026, 2, 1),
+                user=None,
+            )
+
+    def test_initial_entry_rejects_mismatched_purchase_item(self):
+        other_item = create_item(name="Outro artigo")
+        from purchases.tests.base import create_purchase_item
+
+        purchase_item = create_purchase_item(item=other_item)
+
+        with self.assertRaises(ValidationError):
+            create_initial_entry(
+                item=self.item,
+                location=self.warehouse,
+                quantity=Decimal("1"),
+                purchase_item=purchase_item,
+            )
+
+    def test_get_item_location_balances_handles_outgoing_only_movement(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("5"),
+        )
+        create_adjustment_out(
+            item=self.item,
+            from_location=self.warehouse,
+            quantity=Decimal("1"),
+            movement_date=date(2026, 2, 1),
+            user=None,
+            notes="Avaria",
+        )
+
+        balances = get_item_location_balances(self.item)
+
+        quantities = {b["location"].pk: b["quantity"] for b in balances}
+        self.assertEqual(quantities[self.warehouse.pk], Decimal("4"))
+
+    def test_cancel_adjustment_out_without_destination(self):
+        create_initial_entry(
+            item=self.item,
+            location=self.warehouse,
+            quantity=Decimal("5"),
+        )
+        adjustment = create_adjustment_out(
+            item=self.item,
+            from_location=self.warehouse,
+            quantity=Decimal("2"),
+            movement_date=date(2026, 2, 1),
+            user=None,
+            notes="Avaria",
+        )
+
+        cancel_stock_movement(
+            movement=adjustment,
+            user=None,
+            reason="Engano",
+        )
+
+        adjustment.refresh_from_db()
+        self.assertTrue(adjustment.is_cancelled)
 
 
 class PurchaseReceiptServiceTests(TestCase):
