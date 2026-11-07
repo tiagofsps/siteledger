@@ -4,8 +4,6 @@ from decimal import Decimal
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
-from purchases.models import Purchase, PurchaseItem, Supplier
-
 from .base import create_purchase, create_purchase_item, create_supplier
 
 
@@ -67,8 +65,8 @@ class PurchaseItemModelTests(TestCase):
         self.assertEqual(item.subtotal, Decimal("2.51"))
 
     def test_active_received_and_remaining_quantity(self):
-        from inventory.tests.base import create_item, warehouse
         from inventory.services import receive_purchase_item
+        from inventory.tests.base import create_item, warehouse
 
         item = create_item()
         purchase_item = create_purchase_item(

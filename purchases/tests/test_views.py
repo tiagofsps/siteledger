@@ -9,16 +9,19 @@ from django.test import TestCase
 from django.urls import reverse
 
 from inventory.models import StockMovement
-from inventory.tests.base import create_initial_entry, create_item, project_location, warehouse
+from inventory.tests.base import (
+    create_initial_entry,
+    create_item,
+    project_location,
+    warehouse,
+)
 from projects.tests.base import create_project, create_user
-
 from purchases.forms import PurchaseForm, SupplierForm
 from purchases.formsets import PurchaseItemFormSet
 from purchases.models import Purchase, PurchaseItem, Supplier
 from purchases.views import _purchase_wizard_step
 
 from .base import create_purchase, create_purchase_item, create_supplier
-
 
 PURCHASE_PERMISSIONS = (
     "purchases.view_supplier",

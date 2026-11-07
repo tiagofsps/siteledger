@@ -11,7 +11,6 @@ from purchases.tests.base import (
     create_supplier,
 )
 
-
 SEARCH_PERMISSIONS = (
     "projects.view_project",
     "purchases.view_purchase",

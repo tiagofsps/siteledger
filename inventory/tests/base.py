@@ -1,9 +1,8 @@
 from datetime import date
 
-from projects.tests.base import create_project, create_user
-
-from inventory.models import Item, Location
+from inventory.models import Item
 from inventory.services import ensure_project_location, get_warehouse_location
+from projects.tests.base import create_project
 
 
 def create_item(

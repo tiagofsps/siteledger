@@ -4,9 +4,8 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from inventory.models import Item, StockMovement
+from inventory.models import StockMovement
 from inventory.services import (
-    receive_purchase_item,
     cancel_stock_movement,
     create_adjustment_in,
     create_adjustment_out,
@@ -15,10 +14,11 @@ from inventory.services import (
     get_item_location_balances,
     get_project_location_balances,
     location_balance,
+    receive_purchase_item,
     return_to_warehouse,
 )
-from purchases.models import Purchase, PurchaseItem, Supplier
 from projects.tests.base import create_project
+from purchases.models import Purchase, PurchaseItem, Supplier
 
 from .base import create_initial_entry, create_item, project_location, warehouse
 
