@@ -85,6 +85,15 @@ class BaseTemplateTests(SimpleTestCase):
         self.assertIn('role="switch"', html)
         self.assertIn(reverse("login"), html)
 
+    def test_shell_icons_are_inline_svg_not_text_symbols(self):
+        html = self.render_base(User(username="tester"))
+
+        self.assertIn('<svg class="theme-switch-icon"', html)
+        self.assertIn('<svg class="nav-icon"', html)
+        for symbol in ("☀", "☾", "☰", "×"):
+            with self.subTest(symbol=symbol):
+                self.assertNotIn(symbol, html)
+
     def test_mobile_javascript_asset_is_available(self):
         self.assertIsNotNone(finders.find("js/app.js"))
 
