@@ -1,6 +1,19 @@
-# SiteLedger Operations Management
+# SiteLedger
 
-Internal web application for SiteLedger to manage construction projects, material purchases, a shared item catalogue and recorded material movements between logical locations.
+[![CI](https://github.com/tiagofsps/siteledger/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagofsps/siteledger/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.15-3776ab?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.2-092e20?logo=django&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1?logo=postgresql&logoColor=white)
+
+Operations manager for small construction companies: construction projects,
+material purchases, a shared item catalogue and an append-only stock movement
+ledger between a warehouse and each project site.
+
+It is a **reference implementation**, not a hosted service. The workflow was
+designed with a small construction business in mind, but the repository is
+generic: branding is configuration, so a fork can be re-branded and deployed for
+another company without changing code. See [Branding](#branding) and
+[Fork and re-brand](#fork-and-re-brand).
 
 The application manages `Project`, `Supplier`, `Purchase`, `PurchaseItem`, `Item`, `Location` and `StockMovement`.
 
@@ -163,6 +176,7 @@ Adjust the local `.env`. The `.env` file must not be versioned and must never co
 
 Main variables:
 
+- `SITE_NAME`, `SITE_SUBTITLE`, `SITE_EMAIL`, `SITE_LOGO`: deployment branding (see [Branding](#branding)).
 - `DJANGO_SECRET_KEY`: secret key; required when `DJANGO_DEBUG=False`.
 - `DJANGO_DEBUG`: `True` in development, `False` in production.
 - `DJANGO_ALLOWED_HOSTS`: comma-separated list.
@@ -342,7 +356,7 @@ themselves. The report fails when coverage drops below the configured threshold.
 
 Continuous integration runs the same checks, including linting and coverage, on
 every push to `main` and every pull request, against PostgreSQL, using Python
-3.14.10. See [`docs/render-deployment.md`](docs/render-deployment.md).
+3.14.10. See [`docs/deployment.md`](docs/deployment.md).
 
 ## Commit conventions
 
@@ -360,14 +374,45 @@ Commit messages follow the conventions documented in
 - `media/`: local development uploads, never served publicly.
 - `tests/`: cross-cutting foundation and integration tests.
 
+## Branding
+
+The site name, subtitle, contact address and logo are deployment configuration:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `SITE_NAME` | `SiteLedger` | Name in the page title and header |
+| `SITE_SUBTITLE` | `Gestão Operacional` | Header subtitle |
+| `SITE_EMAIL` | *(empty)* | Contact address shown to users |
+| `SITE_LOGO` | *(empty)* | Optional path under `static/`, e.g. `img/logo.svg` |
+
+With no logo configured the header shows the name as a text mark, which is what
+this repository ships.
+
+## Fork and re-brand
+
+To run this for a real company:
+
+1. Fork the repository.
+2. Set `SITE_NAME`, `SITE_SUBTITLE`, `SITE_EMAIL` and, if you have one, `SITE_LOGO`.
+3. Create your own deployment (the included [Render blueprint](render.yaml) is a
+   starting point) with a real `DJANGO_SECRET_KEY` and `DJANGO_DEBUG=False`.
+4. Run `python manage.py seed_demo` for demo data, or start from an empty
+   database for production use.
+
+No code changes are needed to re-brand. What a production deployment still
+requires is operational work: backups, HTTPS, a real user onboarding process and
+support.
+
 ## Production
 
-Render deployment is documented in
-[`docs/render-deployment.md`](docs/render-deployment.md).
+Deployment steps, required environment variables and the security checklist are
+in [`docs/deployment.md`](docs/deployment.md).
 
-The current Render environment is a free evaluation deployment: the web service
-and database are free instances, the database expires after 30 days and has no
-backups. Do not enter real company data until it is upgraded to paid plans.
+- Configure `DJANGO_DEBUG=False`, a real `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
+- Use `DATABASE_URL` for the managed PostgreSQL instance; `DJANGO_DB_ENGINE=postgresql` and the `DB_*` variables remain available as the alternative.
+- Ensure HTTPS and the appropriate security headers.
+- Keep `media/` private. Documents must be served only by authenticated views with permission checks.
+- Do not serve `MEDIA_ROOT` directly from the web server.
 
 - Configure `DJANGO_DEBUG=False`, a real `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
 - Use `DATABASE_URL` for Render PostgreSQL; `DJANGO_DB_ENGINE=postgresql` and the `DB_*` variables remain available as the alternative.
@@ -375,3 +420,9 @@ backups. Do not enter real company data until it is upgraded to paid plans.
 - Keep `media/` private. Documents must be served only by authenticated views with permission checks.
 - Do not serve `MEDIA_ROOT` directly from the web server.
 - Do not add Docker or other hosting providers without authorisation.
+
+## License
+
+All rights reserved. This repository is published for review and reference; see
+[LICENSE](LICENSE). If you want to use it for a company, fork it and adapt the
+branding as described above.

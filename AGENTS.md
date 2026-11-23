@@ -1,10 +1,11 @@
 # AGENTS.md
 
-Permanent, repo-specific instructions for SiteLedger Operations Management. Read this before changing code.
+Permanent, repo-specific instructions for SiteLedger. Read this before changing code.
 
 ## Project
 
-- Internal Django application for a small civil construction and real-estate company.
+- Django application for small construction companies: projects, purchases and an append-only stock ledger.
+- Reference implementation, not a hosted service. Branding is configuration (`SITE_NAME`, `SITE_SUBTITLE`, `SITE_EMAIL`, `SITE_LOGO`), so a fork can re-brand without code changes.
 - Manages projects, suppliers, purchases, a shared item catalogue, logical locations and an append-only stock movement history.
 - UI in European Portuguese; code, comments, tests and documentation in English. Time zone: `Europe/Lisbon`.
 - Fixed internal user base. No public registration or self-service account creation.
