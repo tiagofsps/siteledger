@@ -1,5 +1,6 @@
 """
-Django settings for the SiteLedger Operations Management project.
+Django settings for SiteLedger, an operations manager for small construction
+companies.
 
 Environment variables are loaded from a local .env file when present.
 Production values must always be provided through the process environment.
@@ -42,6 +43,16 @@ def env_list(name, default=None):
 
 
 DEBUG = env_bool("DJANGO_DEBUG", True)
+
+# Branding is deployment configuration, not code: a fork re-brands by setting
+# these variables, without touching templates or Python.
+BRANDING = {
+    "name": os.getenv("SITE_NAME", "SiteLedger").strip() or "SiteLedger",
+    "subtitle": os.getenv("SITE_SUBTITLE", "Gestão Operacional").strip(),
+    "email": os.getenv("SITE_EMAIL", "").strip(),
+    # Optional path to a file under static/, e.g. "img/logo.svg".
+    "logo": os.getenv("SITE_LOGO", "").strip(),
+}
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "").strip()
 if not SECRET_KEY:
@@ -108,6 +119,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "config.context_processors.branding",
             ],
         },
     },

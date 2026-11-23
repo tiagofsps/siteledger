@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}SiteLedger Operations Management{% endblock %}</title>
+  <title>{% block title %}{{ branding.name }} Operations Management{% endblock %}</title>
   <script>
     document.documentElement.classList.add('js');
     (function() {
@@ -23,10 +23,14 @@
   <header class="app-header">
     <div class="app-header-inner">
       <a class="app-brand" href="{% if request.user.is_authenticated %}{% url 'projects:list' %}{% else %}{% url 'login' %}{% endif %}">
-        <img src="{% static 'img/logo.png' %}" alt="SiteLedger Logo" class="app-brand-logo">
+        {% if branding.logo %}
+          <img src="{% static branding.logo %}" alt="{{ branding.name }} logo" class="app-brand-logo">
+        {% endif %}
         <div class="app-brand-text">
-          <span class="app-brand-title">SiteLedger</span>
-          <span class="app-brand-subtitle">Gestão Operacional</span>
+          <span class="app-brand-title">{{ branding.name }}</span>
+          {% if branding.subtitle %}
+            <span class="app-brand-subtitle">{{ branding.subtitle }}</span>
+          {% endif %}
         </div>
       </a>
 
